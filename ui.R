@@ -44,7 +44,7 @@ shinyUI(dashboardPage(
                                                                            uiOutput("convert_val")),
                                                                   tabPanel("More options",
                                                                            uiOutput("na"),
-                                                                           actionButton("reset","Reset"))
+                                                                           uiOutput("reset"))
                                                             
                                                                   )
                                                   
@@ -62,7 +62,14 @@ shinyUI(dashboardPage(
                                                     column(width=12,uiOutput("show_unique")),
                                                     column(width=12,verbatimTextOutput("unique")))
                                           )))),
-                                tabItem("analyze",h1("Analyze"))
+                                tabItem("analyze",h1("Analyze"),
+                                        hidden(
+                                          div(id="hidden2",box(solidHeader=TRUE,width=4,
+                                            column(width=12, uiOutput("plots")))
+                                            
+                                          )
+                                        )
+                                        )
 
 
                                 

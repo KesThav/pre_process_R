@@ -15,7 +15,7 @@ shinyServer(function(input,output,session){
 
   data <- reactiveVal()
 
-  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode)})
+  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode,input$encode_type)})
   
   observeEvent(input$file,{
     if(!is.null(input$file)){
@@ -77,19 +77,33 @@ shinyServer(function(input,output,session){
         }else if(input$convert_type == 'chr'){
           result[,input$col_to_convert] <- as.character(result[,input$col_to_convert])
           data(result)
+        }else if(input$convert_type == 'factor'){
+          result[,input$col_to_convert] <- as.factor(result[,input$col_to_convert])
+          data(result)
           
         }else{
           data(result)
         }
         
       }else if(length(input$col_to_encode) != 0 & input$val_encode){
-        result[,input$col_to_encode] <- as.numeric(as.factor(result[,input$col_to_encode]))
-        data(result)
+        if(input$encode_type %in% "Numerical"){
+          result[,input$col_to_encode] <- as.numeric(as.factor(result[,input$col_to_encode]))
+          data(result)
+        }else if(input$encode_type %in% "One hot"){
+          col <- result[,input$col_to_encode]
+          col <- as.data.frame(col)
+          dummy <- dummyVars(" ~ .",data=col)
+          col_encoded <- data.frame(predict(dummy, newdata = col))
+          result <- result[,-which(names(result) %in% input$col_to_encode)]
+          result <- cbind(result,col_encoded)
+          data(result)
         
         
-      }else{
-        data(result)
+        }else{
+          data(result)
+        }
       }
+      
       output$display_file <- DT::renderDataTable(result,extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,selection='none')
       output$str <- renderPrint({str(result)})
       output$desc <-renderPrint({psych::describe(result)})
@@ -167,7 +181,7 @@ shinyServer(function(input,output,session){
       })
       
       output$convert_type <- renderUI({
-        pickerInput("convert_type","Select what to convert to",choices=c('integer','double','chr'))
+        pickerInput("convert_type","Select what to convert to",choices=c('integer','double','chr','factor'))
       })
       
       output$convert_val <- renderUI({
@@ -185,6 +199,11 @@ shinyServer(function(input,output,session){
       output$col_to_encode <- renderUI({
         pickerInput("col_to_encode","Select column to encode",choices=colnames(data()),select=colnames(data())[1])
       })
+      
+      output$encode_type <- renderUI({
+        pickerInput("encode_type","Select type of encoding",choices=c("Numerical","One hot"),select="Normal")
+      })
+      
       
       output$val_encode <- renderUI({
         actionButton("val_encode","Encode")

@@ -55,6 +55,7 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("convert_val")),
                                                                         tabPanel("Encode variables",
                                                                                  uiOutput("col_to_encode"),
+                                                                                 uiOutput("encode_type"),
                                                                                  uiOutput("val_encode")),
                                                                         tabPanel("More options",
                                                                                  uiOutput("na"),

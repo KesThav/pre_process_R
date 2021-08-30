@@ -6,10 +6,10 @@ PPR helps users to preprocess and analyze dataset without coding.
 - See details for each columns (data type, unique values)
 - dropping NA
 - Merge columns by specifying a name
-- Encode columns
+- Encode columns (Numerical and One hot)
 - Delete columns
 - Delete rows
-- Convert column's type (integer, double and character)
+- Convert column's type (integer, double, character and factor)
 - Reset (return initial dataset)
 
 ### Analyze

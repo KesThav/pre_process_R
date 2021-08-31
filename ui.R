@@ -33,7 +33,8 @@ shinyUI(dashboardPage(
                                         fluidRow(
                                               box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
                                               
-                                        fluidRow(
+                                        hidden(div(id="main_div",
+                                                   fluidRow(
                                                        infoBoxOutput("data_rows"),
                                                        infoBoxOutput("data_columns")),
                                         
@@ -61,7 +62,7 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("na"),
                                                                                  uiOutput("reset"))))),
                                           
-                                          column(style='padding:0px;',offset=0,width=8,box(style="overflow-x : scroll;overflow-y : scroll;",height=box_height,solidHeader = TRUE,id="data_table",width=12,
+                                          column(style='padding:0px;',offset=0,width=8,box(style="overflow-x : scroll;height=40em",solidHeader = TRUE,id="data_table",width=12,
                                                              column(width=12,DT::dataTableOutput("display_file"))))
                                                     ),
                                         
@@ -74,13 +75,16 @@ shinyUI(dashboardPage(
                                         fluidRow(
                                           box(solidHeader = TRUE,title="Show unique",id="unique_",width=12,
                                               column(width=12,uiOutput("show_unique")),
-                                              column(width=12,verbatimTextOutput("unique"))))
+                                              column(width=12,verbatimTextOutput("unique"))))))
                                                     
                                                   
                                           ),
                                   tabItem(tabName="analyze",
-                                          
                                           fluidRow(
+                                            box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_2", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
+                                          hidden(
+                                            div(id="main_div_2",
+                                                fluidRow(
                                             h1("Analyze")),
                                           
                                           fluidRow(
@@ -95,9 +99,30 @@ shinyUI(dashboardPage(
                                             
                                             column(style='padding:0px;',width=8, box(solidHeader = TRUE,width=12,
                                                                                      plotlyOutput("graphic")
-                                            )))),
+                                            )))))),
                                   
-                                  tabItem(tabName="join",h1("Join file")),
+                                  tabItem(tabName="join",
+                                          
+                                          fluidRow(h1("Join file")),
+                                          
+                                          fluidRow(
+                                            
+                                            column(style='padding:0px;',width=4,box(solidHeader = TRUE,width=12,
+                                                                                fileInput("file1","Load first file",multiple=FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                                                                fileInput("file2","Load second file",multiple=FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                                                                uiOutput("select_join"),
+                                                                                uiOutput("join_by"),
+                                                                                div(style="width : 135px; display : flex; flex-direction : row; justify-content : space-between;",uiOutput("clear"),uiOutput("save"))
+                                                                                )),
+                                            
+                                            column(style='padding:0px;',width=8, tabBox(width=12,
+                                                                                        tabPanel("first file",DT::dataTableOutput("f1_table")),
+                                                                                        tabPanel("second file",DT::dataTableOutput("f2_table")),
+                                                                                        tabPanel(style="overflow-x : scroll;","merged file",DT::dataTableOutput("table_merge"))
+                                                                                        
+                                            )))
+                                          
+                                          ),
                                   
                                   
                                   tabItem(tabName="ml",h1("ML models"))

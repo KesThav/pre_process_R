@@ -4,7 +4,6 @@ library(DT)
 library(shinyjs)
 library(plotly)
 
-box_height='40em'
 
 
 shinyUI(dashboardPage(
@@ -40,14 +39,24 @@ shinyUI(dashboardPage(
                                         
                                         fluidRow(
                                           column(style='padding:0px;',offset=0,width=4,div(id="hidden",
-                                                                 tabBox(width=12,height=box_height,
+                                                                 tabBox(width=12,
                                                                         tabPanel("Handle columns",
                                                                                  uiOutput("delete_col"),
                                                                                  uiOutput("delete"),
+                                                                                 hr(),
                                                                                  uiOutput("merge_col"),
                                                                                  uiOutput("merge_col_name"),
                                                                                  uiOutput("merge_col_sep"),
-                                                                                 uiOutput("merge")),
+                                                                                 uiOutput("merge"),
+                                                                                 hr(),
+                                                                                 uiOutput("rename_col"),
+                                                                                 uiOutput("rename_col_name"),
+                                                                                 uiOutput("rename"),
+                                                                                 hr(),
+                                                                                 uiOutput("split_col"),
+                                                                                 uiOutput("split_col_sep"),
+                                                                                 uiOutput("split")),
+                                                                                
                                                                         tabPanel("Handle rows",
                                                                                  uiOutput("delete_row"),
                                                                                  uiOutput("delete_r")),

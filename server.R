@@ -15,7 +15,9 @@ shinyServer(function(input,output,session){
 #Preprocess
   data <- reactiveVal()
 
-  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode,input$encode_type,input$merge_col_sep)})
+  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,
+                           input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode,input$encode_type,input$merge_col_sep,input$rename,input$rename_col_name,input$rename_col,
+                           input$split,input$split_col, input$split_col_sep)})
   
   observeEvent(input$file,{
     if(!is.null(input$file)){
@@ -103,6 +105,18 @@ shinyServer(function(input,output,session){
         }else{
           data(result)
         }
+      }else if(length(input$rename_col) != 0 & length(input$rename_col_name) != 0 & input$rename){
+        names(result)[names(result) == input$rename_col] <- input$rename_col_name
+        data(result)
+        
+      }else if(length(input$split_col) != 0 & length(input$split_col_sep) != 0 & input$split){
+        splited <- stringr::str_split_fixed(result[,input$split_col],input$split_col_sep,2)
+        splited <- as.data.frame(splited)
+        result <- cbind(result,splited)
+        data(result)
+        
+      }else{
+        data(result)
       }
       
       output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,selection='none',server = FALSE)
@@ -184,6 +198,25 @@ shinyServer(function(input,output,session){
       })
       
       outputOptions(output, "merge_col_sep", suspendWhenHidden = FALSE)
+      
+      output$rename_col <- renderUI({
+        pickerInput("rename_col",label="Select column to rename",choices=colnames(data()))
+      })
+      
+      outputOptions(output, "rename_col", suspendWhenHidden = FALSE)
+      
+      
+      output$rename_col_name <- renderUI({
+        textInput("rename_col_name","Enter new name")
+      })
+      
+      outputOptions(output, "rename_col_name", suspendWhenHidden = FALSE)
+      
+      output$rename <- renderUI({
+        actionButton("rename","rename")
+      })
+      
+      outputOptions(output, "rename", suspendWhenHidden = FALSE)
       
       
       output$delete <- renderUI({
@@ -280,6 +313,23 @@ shinyServer(function(input,output,session){
       
       outputOptions(output, "data_columns", suspendWhenHidden = FALSE)
       
+      output$split_col <- renderUI({
+        pickerInput("split_col","Select column to split",choices=colnames(data()),selected=colnames(data())[1])
+      })
+      
+      outputOptions(output, "split_col", suspendWhenHidden = FALSE)
+      
+      output$split_col_sep <- renderUI({
+        textInput("split_col_sep","Enter separator",value=" ")
+      })
+      
+      outputOptions(output, "split_col_sep", suspendWhenHidden = FALSE)
+      
+      output$split <- renderUI({
+        actionButton("split","split")
+      })
+      
+      outputOptions(output, "split", suspendWhenHidden = FALSE)
       
       
     }
@@ -327,7 +377,7 @@ shinyServer(function(input,output,session){
       })
       
       output$select_color <- renderUI({
-        pickerInput("select_color",label="Select your label color",choices=c(colnames(data()),"None"),selected="")
+        pickerInput("select_color",label="Select your label color",choices=c(colnames(data())),selected="")
       })
       
       output$plot_graph <- renderUI({

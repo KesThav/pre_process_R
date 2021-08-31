@@ -10,6 +10,8 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 - Merge columns by specifying a name and a separator
 - Encode columns (Numerical and One hot)
 - convert column's type (integer, double, character and factor)
+- Split columns using separator
+- Rename columns
 - Delete columns
 - Edit rows
 - Delete rows

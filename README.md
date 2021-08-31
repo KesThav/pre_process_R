@@ -12,6 +12,7 @@ PPR helps users to preprocess and analyze dataset without coding.
 - Edit rows
 - Delete rows
 - Reset (return initial dataset)
+- Export dataset (copy, pdf, csv, excel and print)
 
 ### Analyze
 - Scatter plot

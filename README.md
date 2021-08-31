@@ -29,3 +29,4 @@ Load two files and join them. PPR automatically detect columns with same name on
 - Full join
 - Semi join
 - Anti join
+After joining, merged file is exportable.

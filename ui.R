@@ -46,6 +46,7 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("delete"),
                                                                                  uiOutput("merge_col"),
                                                                                  uiOutput("merge_col_name"),
+                                                                                 uiOutput("merge_col_sep"),
                                                                                  uiOutput("merge")),
                                                                         tabPanel("Handle rows",
                                                                                  uiOutput("delete_row"),

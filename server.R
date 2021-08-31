@@ -14,7 +14,7 @@ shinyServer(function(input,output,session){
 #Preprocess
   data <- reactiveVal()
 
-  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode,input$encode_type)})
+  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode,input$encode_type,input$merge_col_sep)})
   
   observeEvent(input$file,{
     if(!is.null(input$file)){
@@ -59,7 +59,7 @@ shinyServer(function(input,output,session){
       else if(input$merge & input$merge_col_name != ""){
         result[,input$merge_col_name] <- NA
         for(name in input$merge_col){
-          result[,input$merge_col_name] <- paste(result[,input$merge_col_name], result[,name])
+          result[,input$merge_col_name] <- paste(result[,input$merge_col_name],input$merge_col_sep, result[,name])
         }
         result <- as.data.frame(result[,-which(names(result) %in% input$merge_col)])
         data(result)
@@ -104,7 +104,7 @@ shinyServer(function(input,output,session){
         }
       }
       
-      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,selection='none')
+      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,selection='none',server = FALSE)
       output$str <- renderPrint({str(data())})
       output$desc <-renderPrint({psych::describe(data())})
       
@@ -177,6 +177,12 @@ shinyServer(function(input,output,session){
       })
       
       outputOptions(output, "merge_col_name", suspendWhenHidden = FALSE)
+      
+      output$merge_col_sep <- renderUI({
+        textInput("merge_col_sep","Enter separator",value=" ")
+      })
+      
+      outputOptions(output, "merge_col_sep", suspendWhenHidden = FALSE)
       
       
       output$delete <- renderUI({

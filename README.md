@@ -20,3 +20,12 @@ PPR helps users to preprocess and analyze dataset without coding.
 - Violin plot
 - Pie chart
 - Correlogram
+
+### Join
+Load two files and join them. PPR automatically detect columns with same name on both files.
+- Inner join
+- Left join
+- Right join
+- Full join
+- Semi join
+- Anti join

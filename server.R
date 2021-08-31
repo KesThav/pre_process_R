@@ -8,6 +8,7 @@ library(tidyverse)
 library(caret)
 library(datasets)
 library(mltools)
+library(ggcorrplot)
 
 shinyServer(function(input,output,session){
   
@@ -442,22 +443,15 @@ shinyServer(function(input,output,session){
   ##############################################################################################################################################################
   #Join
   
-  file_data <- reactiveValues(f1="",f2="",merge="")
+  file_data <- reactiveValues(f2="",merge="")
   
-  join_event <- reactive({list(input$file1,input$file2)})
+  join_event <- reactive({list(data(),input$file2)})
   observeEvent(join_event(),{
     tryCatch({
-      if(!is.null(input$file1)){
-        d <- input$file1
-        file_1 <- read.csv(d$datapath,header=TRUE)
-        rownames(file_1) <- NULL
-        file_1 <- as.data.frame(file_1)
-        file_data$f1 <- file_1
-        
-        output$f1_table <- DT::renderDataTable(file_data$f1)
-        
-      }
       
+      if(!is.null(input$file)){
+        output$f1_table <- DT::renderDataTable(data())
+      }
       if(!is.null(input$file2)){
         d2 <- input$file2
         file_2 <- read.csv(d2$datapath,header=TRUE)
@@ -468,9 +462,10 @@ shinyServer(function(input,output,session){
         output$f2_table <- DT::renderDataTable(file_data$f2)
       }
       
-      if(!is.null(input$file1) & !is.null(input$file2)){
-        c <- which(names(file_data$f1) %in% names(file_data$f2))
-        c <- colnames(file_data$f1)[c]
+      if(!is.null(data()) & !is.null(input$file2)){
+        result <- data()
+        c <- which(names(result) %in% names(file_data$f2))
+        c <- colnames(result)[c]
         
         if(length(c) > 0){
           output$select_join <- renderUI({
@@ -484,6 +479,10 @@ shinyServer(function(input,output,session){
           
           output$save <- renderUI({
             downloadButton("downloadData","Download")
+          })
+          
+          output$override <- renderUI({
+            actionButton(style="background-color : #f50057; color : #ffffff;","override","Override current data")
           })
         }else{
           showNotification("files does not have common columns", type="error")
@@ -507,25 +506,26 @@ shinyServer(function(input,output,session){
   join <- reactive({list(input$select_join, input$join_by)})
   
   observeEvent(join(),{
+    result <- data()
     tryCatch({
           if(!is.null(input$select_join) & !is.null(input$join_by)){
       if(input$select_join %in% "Inner join"){
-        file_data$merge <- inner_join(file_data$f1,file_data$f2,by=c(input$join_by))
+        file_data$merge <- inner_join(result,file_data$f2,by=c(input$join_by))
         
       }else if(input$select_join %in% "Left join"){
-        file_data$merge <- left_join(file_data$f1,file_data$f2,by=c(input$join_by))
+        file_data$merge <- left_join(result,file_data$f2,by=c(input$join_by))
         
       }else if(input$select_join %in% "Right join"){
-        file_data$merge <- right_join(file_data$f1,file_data$f2,by=c(input$join_by))
+        file_data$merge <- right_join(result,file_data$f2,by=c(input$join_by))
         
       }else if(input$select_join %in% "Full join"){
-        file_data$merge <- full_join(file_data$f1,file_data$f2,by=c(input$join_by))
+        file_data$merge <- full_join(result,file_data$f2,by=c(input$join_by))
         
       }else if(input$select_join %in% "Semi join"){
-        file_data$merge <- semi_join(file_data$f1,file_data$f2,by=c(input$join_by))
+        file_data$merge <- semi_join(result,file_data$f2,by=c(input$join_by))
         
       }else if(input$select_join %in% "Anti join"){
-        file_data$merge <- anti_join(file_data$f1,file_data$f2,by=c(input$join_by))
+        file_data$merge <- anti_join(result,file_data$f2,by=c(input$join_by))
         
       }else{
         
@@ -543,6 +543,23 @@ shinyServer(function(input,output,session){
   
   observeEvent(input$clear, {
     file_data$merge <- ""
+  })
+  
+  observeEvent(input$override,{
+    showModal(modalDialog(
+      title = "Warning",
+      "The current data will be overrided. Please confirm and dismiss.",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton(style="background-color : #f50057; color : #ffffff;","confirm", "Confirm")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm,{
+    data(as.data.frame(file_data$merge))
+    removeModal()
+    showNotification("Current data has been replaced", type="message")
   })
   
   output$downloadData <- downloadHandler(

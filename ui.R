@@ -8,7 +8,7 @@ box_height='40em'
 
 
 shinyUI(dashboardPage(
-                  dashboardHeader(title="Pre-process dataset without coding"),
+                  dashboardHeader(title="PPR"),
                   dashboardSidebar(width = 350,
                                    useShinyjs(),
                                   sidebarMenu(
@@ -109,11 +109,11 @@ shinyUI(dashboardPage(
                                           fluidRow(
                                             
                                             column(style='padding:0px;',width=4,box(solidHeader = TRUE,width=12,
-                                                                                fileInput("file1","Load first file",multiple=FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                                                                                 fileInput("file2","Load second file",multiple=FALSE,accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
                                                                                 uiOutput("select_join"),
                                                                                 uiOutput("join_by"),
-                                                                                div(style="width : 135px; display : flex; flex-direction : row; justify-content : space-between;",uiOutput("clear"),uiOutput("save"))
+                                                                                div(style="width : 100%; display : flex; justify-content : space-between;",div(style="display : flex; flex-direction : row;",uiOutput("clear"),uiOutput("save")),
+                                                                                div(uiOutput("override")))
                                                                                 )),
                                             
                                             column(style='padding:0px;',width=8, tabBox(width=12,

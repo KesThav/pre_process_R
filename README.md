@@ -1,11 +1,13 @@
-# About
+# PPR
 
-PPR helps users to preprocess and analyze dataset without coding.
+PPR helps users pre-process, analyze, visualize, join and apply machine learning models on datasets without coding.
+
+# Available functionalities
 
 ### Pre-processing
 - See details for each columns (data type, unique values)
 - drop NA
-- Merge columns by specifying a name
+- Merge columns by specifying a name and a separator
 - Encode columns (Numerical and One hot)
 - convert column's type (integer, double, character and factor)
 - Delete columns
@@ -23,7 +25,7 @@ PPR helps users to preprocess and analyze dataset without coding.
 - Correlogram
 
 ### Join
-Load two files and join them. PPR automatically detect columns with same name on both files.
+Load two files and join them. PPR automatically detects columns with same name on both files.
 - Inner join
 - Left join
 - Right join
@@ -35,3 +37,10 @@ After joining, merged file can be either export or use as current dataset.
 
 ### ML models
 coming...
+
+# Getting started
+
+1. Clone repository
+2. Install RStudio
+3. Open `server.R` and `ui.R` in RStudio
+4. Press `Run App` button

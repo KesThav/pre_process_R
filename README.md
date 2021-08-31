@@ -31,7 +31,7 @@ Load two files and join them. PPR automatically detect columns with same name on
 - Semi join
 - Anti join
 
-After joining, merged file is exportable.
+After joining, merged file can be either export or use as current dataset.
 
 ### ML models
 coming...

@@ -36,10 +36,11 @@ shinyServer(function(input,output,session){
     data(as.data.frame(d))
   })
 
-
+  counter <- reactiveVal(0)
   observeEvent(listen(),{
     req(data())
     tryCatch({
+
     result <- data()
     if(!is.null(input$file) & length(result) > 0){
       if(input$na){
@@ -116,10 +117,11 @@ shinyServer(function(input,output,session){
       }else{
         data(result)
       }
-      
-      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,server = FALSE)
-      output$str <- renderPrint({str(data())})
-      output$desc <-renderPrint({psych::describe(data())})
+
+      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print'),search = list(regex = TRUE)),editable=TRUE,server = FALSE)
+      input$display_file_
+      output$str <- suppressWarnings(renderPrint({str(result[input$display_file_rows_all,])}))
+      output$desc <-suppressWarnings(renderPrint({psych::describe(result[input$display_file_rows_all,])}))
       
       }}, warning = function(warn){
         showNotification(paste0(warn), type = 'warning')
@@ -288,10 +290,10 @@ shinyServer(function(input,output,session){
 
       
       output$data_rows <- renderInfoBox({
-        infoBox(
-          "Rows", length(rownames(data())), icon = icon("list"),
+        suppressWarnings(infoBox(
+          "Rows", length(input$display_file_rows_all), icon = icon("list"),
           color = "purple"
-        )
+        ))
       })
       
       outputOptions(output, "data_rows", suspendWhenHidden = FALSE)
@@ -338,7 +340,7 @@ shinyServer(function(input,output,session){
   
   observeEvent(input$show_unique,{
     result <- data()
-    output$unique <- renderPrint({unique(result[,input$show_unique])})
+    output$unique <- suppressWarnings(renderPrint({unique(result[input$display_file_rows_all,input$show_unique])}))
   })
   
 ##############################################################################################################################################################

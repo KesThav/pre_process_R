@@ -58,7 +58,6 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("split")),
                                                                                 
                                                                         tabPanel("Handle rows",
-                                                                                 uiOutput("delete_row"),
                                                                                  uiOutput("delete_r")),
                                                                         tabPanel("Convert types",
                                                                                  uiOutput("col_to_convert"),

@@ -52,10 +52,8 @@ shinyServer(function(input,output,session){
         data(result)
       }
       
-      else if(length(input$delete_row) != 0 & input$delete_r){
-        for(row in input$delete_row){
-          result <- result[-as.integer(c(row)),]
-        }
+      else if(!is.null(input$display_file_rows_selected) & input$delete_r){
+        result <- result[-as.numeric(input$display_file_rows_selected),]
         data(result)
       }
       
@@ -119,7 +117,7 @@ shinyServer(function(input,output,session){
         data(result)
       }
       
-      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,selection='none',server = FALSE)
+      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print')),editable=TRUE,server = FALSE)
       output$str <- renderPrint({str(data())})
       output$desc <-renderPrint({psych::describe(data())})
       
@@ -230,12 +228,6 @@ shinyServer(function(input,output,session){
       })
       
       outputOptions(output, "merge", suspendWhenHidden = FALSE)
-      
-      output$delete_row <- renderUI({
-        pickerInput("delete_row","Select rows to delete",choices=as.numeric(rownames(data())),multiple=TRUE)
-      })
-      
-      outputOptions(output, "delete_row", suspendWhenHidden = FALSE)
       
       output$delete_r <- renderUI({
         actionButton("delete_r","delete rows")

@@ -6,17 +6,19 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 
 ### Pre-processing
 - See details for each columns (data type, unique values)
-- drop NA
+- Drop NA
 - Merge columns by specifying a name and a separator
 - Encode columns (Numerical and One hot)
-- convert column's type (integer, double, character and factor)
+- Convert column's type (integer, double, character and factor)
 - Split columns using separator
 - Rename columns
 - Delete columns
 - Edit rows
 - Delete rows
-- Reset (return initial dataset)
 - Export dataset (copy, pdf, csv, excel and print)
+- Filter table using regex syntax
+- Reset (return initial dataset)
+
 
 ### Analyze
 - Scatter plot

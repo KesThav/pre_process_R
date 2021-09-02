@@ -371,12 +371,45 @@ shinyServer(function(input,output,session){
       })
       
       output$select_color <- renderUI({
-        pickerInput("select_color",label="Select your label color",choices=c(colnames(data())),selected="")
+        pickerInput("select_color",label="Select your label color",choices=c(colnames(data()),"None"=""),selected="")
       })
-      
+
       output$plot_graph <- renderUI({
         actionButton("plot_graph","Plot")
       })
+      
+      output$facet_wrap <- renderUI({
+        pickerInput("facet_wrap",label="Select facet wrap",choices=c(colnames(data())),multiple=TRUE,options = pickerOptions(maxOptions = 2))
+      })
+      
+      output$facet_orientation <- renderUI({
+        radioButtons("facet_orientation", "facet orientation",choices=c("Vertical","Horizontal"),selected="Vertical")
+      })
+      
+      output$x_axis_slider <- renderUI({
+        sliderInput("x_axis_slider","x label orientation",min=0,max=90,value=45)
+      })
+      
+      output$y_axis_slider <- renderUI({
+        sliderInput("y_axis_slider","y label orientation",min=0,max=90,value=45)
+      })
+      
+      output$vertical_adjustment_x <- renderUI({
+        sliderInput("vertical_adjustment_x","vertical adjustment for x axis",min=0,max=1,value=0.5)
+      })
+      
+      output$horizontal_adjustment_x <- renderUI({
+        sliderInput("horizontal_adjustment_x","horizontal adjustment for x axis",min=0,max=1,value=1)
+      })
+      
+      output$vertical_adjustment_y <- renderUI({
+        sliderInput("vertical_adjustment_y","vertical adjustment for y axis",min=0,max=1,value=0.5)
+      })
+      
+      output$horizontal_adjustment_y <- renderUI({
+        sliderInput("horizontal_adjustment_y","horizontal adjustment for y axis",min=0,max=1,value=1)
+      })
+      
 
     }
     }, warning = function(warn){
@@ -396,6 +429,8 @@ shinyServer(function(input,output,session){
       shinyjs::show(id="y_value")
       shinyjs::hide(id="dodge")
       shinyjs::show(id="color")
+      shinyjs::show(id="facet_wrap")
+      shinyjs::show(id="facet_orientation")
       
     }
     
@@ -405,18 +440,24 @@ shinyServer(function(input,output,session){
       shinyjs::hide(id="y_value")
       shinyjs::show(id="dodge")
       shinyjs::show(id="color")
+      shinyjs::show(id="facet_wrap")
+      shinyjs::show(id="facet_orientation")
       
     }else if(input$select_plot %in% c("pie chart")){
       shinyjs::hide(id="x_value")
       shinyjs::show(id="y_value")
       shinyjs::hide(id="dodge")
       shinyjs::hide(id="color")
+      shinyjs::hide(id="facet_wrap")
+      shinyjs::hide(id="facet_orientation")
       
     }else if(input$select_plot %in% c("correlogram")){
       shinyjs::hide(id="x_value")
       shinyjs::hide(id="y_value")
       shinyjs::hide(id="dodge")
       shinyjs::hide(id="color")
+      shinyjs::hide(id="facet_wrap")
+      shinyjs::hide(id="facet_orientation")
     
     }else if(input$select_plot %in% c("dendrogram")){
       
@@ -432,24 +473,96 @@ shinyServer(function(input,output,session){
   })
   
   
-  observeEvent(input$plot_graph,{
+  change_to_observe <- reactive({list(input$plot_graph,input$x_axis_slider,input$vertical_adjustment_x,hjust=input$horizontal_adjustment_x,input$y_axis_slider,
+                                      input$vertical_adjustment_y,hjust=input$horizontal_adjustment_y)})
+  observeEvent(change_to_observe(),{
     tryCatch({
+      t <- theme(axis.text.x = element_text(angle = input$x_axis_slider, vjust = input$vertical_adjustment_x, hjust=input$horizontal_adjustment_x), 
+                 axis.text.y = element_text(angle=input$y_axis_slider, vjust = input$vertical_adjustment_y, hjust=input$horizontal_adjustment_y))
       output$graphic <- renderPlotly({
         if(input$select_plot %in% "scatter plot"){
-          ggplot(data(),aes_string(x=input$select_x,y=input$select_y,color=input$select_color)) + geom_point() + geom_smooth(method=lm, se=FALSE, fullrange=TRUE)
+          p <- ggplot(data(),aes_string(x=input$select_x,y=input$select_y,color=ifelse(input$select_color != "",input$select_color,"NULL"))) + geom_point() + geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + t
+          if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
+            if(length(input$facet_wrap) == 1){
+             if(input$facet_orientation == "Vertical"){
+               p + facet_grid(reformulate(".",input$facet_wrap))
+             }else{
+               p + facet_grid(reformulate(input$facet_wrap,"."))
+             }
+            }else{
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+              }else{
+                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+              }
+            }
+          }else{
+            p
+          }
         }
         
         else if(input$select_plot %in% "bar chart"){
-          ggplot(data(), aes_string(x=input$select_x,fill=input$select_color)) +
-            geom_bar(position=input$dodge,alpha=0.5)
+          p <- ggplot(data(), aes_string(x=input$select_x,fill=ifelse(input$select_color != "",input$select_color,"NULL"))) +
+            geom_bar(position=input$dodge,alpha=0.5) + t
+          if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
+            if(length(input$facet_wrap) == 1){
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(reformulate(".",input$facet_wrap))
+              }else{
+                p + facet_grid(reformulate(input$facet_wrap,"."))
+              }
+            }else{
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+              }else{
+                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+              }
+            }
+          }else{
+            p
+          }
           
         }else if(input$select_plot %in% "boxplot"){
-          ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=input$select_color)) +
-            geom_boxplot()
+          p<- ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=ifelse(input$select_color != "",input$select_color,"NULL"))) +
+            geom_boxplot()+ t
+          if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
+            if(length(input$facet_wrap) == 1){
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(reformulate(".",input$facet_wrap))
+              }else{
+                p + facet_grid(reformulate(input$facet_wrap,"."))
+              }
+            }else{
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+              }else{
+                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+              }
+            }
+          }else{
+            p
+          }
         
         }else if(input$select_plot %in% "violin plot"){
-          ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=input$select_color)) +
-            geom_violin()
+          p <- ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=ifelse(input$select_color != "",input$select_color,"NULL"))) +
+            geom_violin()+ t
+          if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
+            if(length(input$facet_wrap) == 1){
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(reformulate(".",input$facet_wrap))
+              }else{
+                p + facet_grid(reformulate(input$facet_wrap,"."))
+              }
+            }else{
+              if(input$facet_orientation == "Vertical"){
+                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+              }else{
+                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+              }
+            }
+          }else{
+            p
+          }
           
         }else if(input$select_plot %in% "pie chart"){
           if(!is.null(data())){

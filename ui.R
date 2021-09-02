@@ -104,11 +104,24 @@ shinyUI(dashboardPage(
                                                                                      hidden(div(id="y_value",uiOutput("select_y"))),
                                                                                      hidden(div(id="dodge",uiOutput("dodge"))),
                                                                                      hidden(div(id="color",uiOutput("select_color"))),
+                                                                                     hidden(div(id="facet_wrap",uiOutput("facet_wrap"))),
+                                                                                     hidden(div(id="facet_orientation",uiOutput("facet_orientation"))),
                                                                                      uiOutput("plot_graph"))),
                                             
                                             column(style='padding:0px;',width=8, box(solidHeader = TRUE,width=12,
                                                                                      plotlyOutput("graphic")
-                                            )))))),
+                                            ))),
+                                          
+                                          fluidRow(
+                                            column(style="padding:0px",width=4,box(solidHeader=TRUE,width=12,
+                                                                                   uiOutput("x_axis_slider"),
+                                                                                   uiOutput("y_axis_slider"),
+                                                                                   uiOutput("vertical_adjustment_x"),
+                                                                                   uiOutput("horizontal_adjustment_x"),
+                                                                                   uiOutput("vertical_adjustment_y"),
+                                                                                   uiOutput("horizontal_adjustment_y")
+                                                                                   ))
+                                          ) ))),
                                   
                                   tabItem(tabName="join",
                                           

@@ -15,6 +15,7 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 - Delete columns
 - Edit rows
 - Delete rows
+- Override current data
 - Export dataset (copy, pdf, csv, excel and print)
 - Filter table (filter table on multiple columns using regex syntax)
 - Reset (return initial dataset)

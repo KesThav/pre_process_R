@@ -21,7 +21,7 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 - Reset (return initial dataset)
 
 
-## Analyze
+## Plots
 ### Available plots
 - Scatter plot
 - Bar chart

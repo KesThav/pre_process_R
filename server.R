@@ -374,7 +374,7 @@ shinyServer(function(input,output,session){
       output$data_rows <- renderInfoBox({
         suppressWarnings(infoBox(
           "Rows", length(input$display_file_rows_all), icon = icon("list"),
-          color = "purple"
+          color = "blue"
         ))
       })
       
@@ -383,7 +383,7 @@ shinyServer(function(input,output,session){
       output$data_columns <- renderInfoBox({
         infoBox(
           "Columns", length(colnames(data())), icon = icon("list"),
-          color = "purple"
+          color = "blue"
         )
       })
       
@@ -626,9 +626,9 @@ shinyServer(function(input,output,session){
              }
             }else{
               if(input$facet_orientation == "Vertical"){
-                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+                p + facet_grid(reformulate(input$facet_wrap[1],input$facet_wrap[2]))
               }else{
-                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+                p + facet_grid(reformulate(input$facet_wrap[2],input$facet_wrap[1]))
               }
             }
           }else{
@@ -648,9 +648,9 @@ shinyServer(function(input,output,session){
               }
             }else{
               if(input$facet_orientation == "Vertical"){
-                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+                p + facet_grid(reformulate(input$facet_wrap[1],input$facet_wrap[2]))
               }else{
-                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+                p + facet_grid(reformulate(input$facet_wrap[2],input$facet_wrap[1]))
               }
             }
           }else{
@@ -669,9 +669,9 @@ shinyServer(function(input,output,session){
               }
             }else{
               if(input$facet_orientation == "Vertical"){
-                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+                p + facet_grid(reformulate(input$facet_wrap[1],input$facet_wrap[2]))
               }else{
-                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+                p + facet_grid(reformulate(input$facet_wrap[2],input$facet_wrap[1]))
               }
             }
           }else{
@@ -690,9 +690,9 @@ shinyServer(function(input,output,session){
               }
             }else{
               if(input$facet_orientation == "Vertical"){
-                p + facet_grid(input$facet_wrap[1] ~ input$facet_wrap[2])
+                p + facet_grid(reformulate(input$facet_wrap[1],input$facet_wrap[2]))
               }else{
-                p + facet_grid(input$facet_wrap[2] ~ input$facet_wrap[1])
+                p + facet_grid(reformulate(input$facet_wrap[2],input$facet_wrap[1]))
               }
             }
           }else{

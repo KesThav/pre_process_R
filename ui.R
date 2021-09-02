@@ -12,9 +12,9 @@ shinyUI(dashboardPage(
                                    useShinyjs(),
                                   sidebarMenu(
                                     menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-                                    menuItem("Join files", icon = icon("th"), tabName = "join",
+                                    menuItem("Join files", icon = icon("signal"), tabName = "join",
                                              badgeLabel = "new", badgeColor = "green"),
-                                    menuItem("Analyze", icon = icon("th"), tabName = "analyze",
+                                    menuItem("Plot", icon = icon("signal"), tabName = "plot",
                                              badgeLabel = "new", badgeColor = "green"),
                                     menuItem("Machine Learning", icon = icon("th"), tabName = "ml",
                                              badgeLabel = "new", badgeColor = "green")
@@ -40,7 +40,7 @@ shinyUI(dashboardPage(
                                         fluidRow(
                                           column(style='padding:0px;',offset=0,width=4,div(id="hidden",
                                                                  tabBox(width=12,
-                                                                        tabPanel("Handle columns",
+                                                                        tabPanel("Merge / Delete",
                                                                                  uiOutput("delete_col"),
                                                                                  uiOutput("delete"),
                                                                                  hr(),
@@ -49,6 +49,10 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("merge_col_sep"),
                                                                                  uiOutput("merge"),
                                                                                  hr(),
+                                                                                 uiOutput("delete_r")
+                                                                                 ),
+                                                                                
+                                                                        tabPanel("Rename / Split",
                                                                                  uiOutput("rename_col"),
                                                                                  uiOutput("rename_col_name"),
                                                                                  uiOutput("rename"),
@@ -56,9 +60,6 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("split_col"),
                                                                                  uiOutput("split_col_sep"),
                                                                                  uiOutput("split")),
-                                                                                
-                                                                        tabPanel("Handle rows",
-                                                                                 uiOutput("delete_r")),
                                                                         tabPanel("Convert types",
                                                                                  uiOutput("col_to_convert"),
                                                                                  uiOutput("convert_type"),
@@ -88,40 +89,40 @@ shinyUI(dashboardPage(
                                                     
                                                   
                                           ),
-                                  tabItem(tabName="analyze",
+                                  tabItem(tabName="plot",
                                           fluidRow(
                                             box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_2", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
                                           hidden(
                                             div(id="main_div_2",
                                                 fluidRow(
-                                            h1("Analyze")),
+                                            h1("Plot")),
                                           
                                           fluidRow(
                                             
-                                            column(style='padding:0px;',width=4,box(solidHeader=TRUE,width=12,
-                                                                                     uiOutput("select_plot"),
-                                                                                     hidden(div(id="x_value",uiOutput("select_x"))),
-                                                                                     hidden(div(id="y_value",uiOutput("select_y"))),
-                                                                                     hidden(div(id="dodge",uiOutput("dodge"))),
-                                                                                     hidden(div(id="color",uiOutput("select_color"))),
-                                                                                     hidden(div(id="facet_wrap",uiOutput("facet_wrap"))),
-                                                                                     hidden(div(id="facet_orientation",uiOutput("facet_orientation"))),
-                                                                                     uiOutput("plot_graph"))),
+                                            column(style='padding:0px;',width=4,tabBox(width=12,
+                                                                                       tabPanel("Plot",
+                                                                                                uiOutput("select_plot"),
+                                                                                                hidden(div(id="x_value",uiOutput("select_x"))),
+                                                                                                hidden(div(id="y_value",uiOutput("select_y"))),
+                                                                                                hidden(div(id="dodge",uiOutput("dodge"))),
+                                                                                                hidden(div(id="color",uiOutput("select_color"))),
+                                                                                                hidden(div(id="facet_wrap",uiOutput("facet_wrap"))),
+                                                                                                hidden(div(id="facet_orientation",uiOutput("facet_orientation"))),
+                                                                                                uiOutput("plot_graph")
+                                                                                                ),
+                                                                                       tabPanel("Params",
+                                                                                                uiOutput("x_axis_slider"),
+                                                                                                uiOutput("y_axis_slider"),
+                                                                                                uiOutput("vertical_adjustment_x"),
+                                                                                                uiOutput("horizontal_adjustment_x"),
+                                                                                                uiOutput("vertical_adjustment_y"),
+                                                                                                uiOutput("horizontal_adjustment_y"))
+                                                                                        )),
                                             
                                             column(style='padding:0px;',width=8, box(solidHeader = TRUE,width=12,
                                                                                      plotlyOutput("graphic")
                                             ))),
-                                          
-                                          fluidRow(
-                                            column(style="padding:0px",width=4,box(solidHeader=TRUE,width=12,
-                                                                                   uiOutput("x_axis_slider"),
-                                                                                   uiOutput("y_axis_slider"),
-                                                                                   uiOutput("vertical_adjustment_x"),
-                                                                                   uiOutput("horizontal_adjustment_x"),
-                                                                                   uiOutput("vertical_adjustment_y"),
-                                                                                   uiOutput("horizontal_adjustment_y")
-                                                                                   ))
-                                          ) ))),
+                                           ))),
                                   
                                   tabItem(tabName="join",
                                           

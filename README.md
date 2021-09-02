@@ -5,7 +5,7 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 # Available functionalities
 
 ### Pre-processing
-- See details for each columns (data type, unique values)
+- See details for each columns (data types, statistic informations and unique values)
 - Drop NA
 - Merge columns by specifying a name and a separator
 - Encode columns (Numerical and One hot)

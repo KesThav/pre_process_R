@@ -72,7 +72,7 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("reset"))))),
                                           
                                           column(style='padding:0px;',offset=0,width=8,box(style="overflow-x : scroll;height=40em",solidHeader = TRUE,id="data_table",width=12,
-                                                             column(width=12,DT::dataTableOutput("display_file"))))
+                                                             column(uiOutput("override_datasets"),width=12,DT::dataTableOutput("display_file"))))
                                                     ),
                                         
                                         fluidRow(

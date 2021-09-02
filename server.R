@@ -15,11 +15,10 @@ shinyServer(function(input,output,session){
 #Preprocess
   data <- reactiveVal()
 
-  listen <- reactive({list(input$na,input$delete,input$merge,input$delete_r,input$reset,input$convert_val,
-                           input$convert_type,input$col_to_convert,input$col_to_encode,input$val_encode,input$encode_type,input$merge_col_sep,input$rename,input$rename_col_name,input$rename_col,
-                           input$split,input$split_col, input$split_col_sep)})
-  
+
+  #read file
   observeEvent(input$file,{
+    tryCatch({
     if(!is.null(input$file)){
       req(input$file)
       file <- input$file
@@ -27,111 +26,166 @@ shinyServer(function(input,output,session){
       rownames(d) <- NULL
       data(as.data.frame(d))
     }
+    }, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
   })
   
+  #reset
   observeEvent(input$reset,{
+    tryCatch({
     file <- input$file
     d <- read.csv(file$datapath,header=TRUE)
     rownames(d) <- NULL
     data(as.data.frame(d))
+  }, warning = function(warn){
+    showNotification(paste0(warn), type = 'warning')
+  },
+  error = function(err){
+    showNotification(paste0(err), type = 'err')})
   })
 
-  counter <- reactiveVal(0)
-  observeEvent(listen(),{
-    req(data())
-    tryCatch({
 
+  #show dataset
+  observeEvent(data(),{
+    tryCatch({
     result <- data()
-    if(!is.null(input$file) & length(result) > 0){
-      if(input$na){
-        result <- result %>% tidyr::drop_na()
-        data(result)
+    output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print'),search = list(regex = TRUE)),editable=TRUE,server = FALSE)
+    output$str <- suppressWarnings(renderPrint({str(result[input$display_file_rows_all,])}))
+    output$desc <-suppressWarnings(renderPrint({psych::describe(result[input$display_file_rows_all,])}))
+  }, warning = function(warn){
+    showNotification(paste0(warn), type = 'warning')
+  },
+  error = function(err){
+    showNotification(paste0(err), type = 'err')})
+  })
+  
+  #delete na
+  observeEvent(input$na,{
+    tryCatch({
+    if(input$na){
+      result <- data()
+      result <- result %>% tidyr::drop_na()
+      data(result)
+    }}, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+  })
+  
+  #delete columns
+  observeEvent(c(input$delete_col,input$delete),{
+    tryCatch({
+    if(length(input$delete_col) != 0 & input$delete){
+      result <- data()
+      result <- as.data.frame(result[,-which(names(result) %in% input$delete_col)])
+      data(result)
+    }
+  }, warning = function(warn){
+    showNotification(paste0(warn), type = 'warning')
+  },
+  error = function(err){
+    showNotification(paste0(err), type = 'err')})
+  })
+  
+  #delete rows
+  observeEvent(c(input$display_file_rows_selected,input$delete_r),{
+    tryCatch({
+    if(!is.null(input$display_file_rows_selected) & input$delete_r){
+      result <- data()
+      result <- result[-as.numeric(input$display_file_rows_selected),]
+      data(result)
+    }
+    }, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+  })
+  
+  #merge columns
+  observeEvent(c(input$merge,input$merge_col_name,input$merge_col_sep),{
+    tryCatch({
+    if(input$merge & input$merge_col_name != "" & length(input$merge_col_sep) != 0){
+      result <- data()
+      result[,input$merge_col_name] <- NA
+      for(name in input$merge_col){
+        result[,input$merge_col_name] <- paste(result[,input$merge_col_name],input$merge_col_sep, result[,name])
       }
+      result <- as.data.frame(result[,-which(names(result) %in% input$merge_col)])
+      data(result)
       
-      else if(length(input$delete_col) != 0 & input$delete){
-        result <- as.data.frame(result[,-which(names(result) %in% input$delete_col)])
-        data(result)
-      }
-      
-      else if(!is.null(input$display_file_rows_selected) & input$delete_r){
-        result <- result[-as.numeric(input$display_file_rows_selected),]
-        data(result)
-      }
-      
-      else if(input$merge & input$merge_col_name != ""){
-        result[,input$merge_col_name] <- NA
-        for(name in input$merge_col){
-          result[,input$merge_col_name] <- paste(result[,input$merge_col_name],input$merge_col_sep, result[,name])
-        }
-        result <- as.data.frame(result[,-which(names(result) %in% input$merge_col)])
-        data(result)
-        
-      }else if(length(input$col_to_convert) != 0 & length(input$convert_type) != 0 & input$convert_val){
-        
-        if(input$convert_type == 'integer'){
-          result[,input$col_to_convert] <- as.integer(result[,input$col_to_convert])
-          data(result)
-          
-        }else if(input$convert_type == 'double'){
-          result[,input$col_to_convert] <- as.double(result[,input$col_to_convert])
-          data(result)
-          
-        }else if(input$convert_type == 'chr'){
-          result[,input$col_to_convert] <- as.character(result[,input$col_to_convert])
-          data(result)
-        }else if(input$convert_type == 'factor'){
-          result[,input$col_to_convert] <- as.factor(result[,input$col_to_convert])
-          data(result)
-          
-        }else{
-          data(result)
-        }
-        
-      }else if(length(input$col_to_encode) != 0 & input$val_encode){
-        if(input$encode_type %in% "Numerical"){
-          result[,input$col_to_encode] <- as.numeric(as.factor(result[,input$col_to_encode]))
-          data(result)
-        }else if(input$encode_type %in% "One hot"){
-          col <- result[,input$col_to_encode]
-          col <- as.data.frame(col)
-          dummy <- dummyVars(" ~ .",data=col)
-          col_encoded <- data.frame(predict(dummy, newdata = col))
-          result <- result[,-which(names(result) %in% input$col_to_encode)]
-          result <- cbind(result,col_encoded)
-          data(result)
-        
-        
-        }else{
-          data(result)
-        }
-      }else if(length(input$rename_col) != 0 & length(input$rename_col_name) != 0 & input$rename){
-        names(result)[names(result) == input$rename_col] <- input$rename_col_name
+    }
+    }, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+  })
+  
+  #convert col
+  observeEvent(c(input$col_to_convert,input$convert_type,input$convert_val),{
+    tryCatch({
+    if(length(input$col_to_convert) != 0 & length(input$convert_type) != 0 & input$convert_val){
+      result <- data()
+      if(input$convert_type == 'integer'){
+        result[,input$col_to_convert] <- as.integer(result[,input$col_to_convert])
         data(result)
         
-      }else if(length(input$split_col) != 0 & length(input$split_col_sep) != 0 & input$split){
-        splited <- stringr::str_split_fixed(result[,input$split_col],input$split_col_sep,2)
-        splited <- as.data.frame(splited)
-        result <- cbind(result,splited)
+      }else if(input$convert_type == 'double'){
+        result[,input$col_to_convert] <- as.double(result[,input$col_to_convert])
+        data(result)
+        
+      }else if(input$convert_type == 'chr'){
+        result[,input$col_to_convert] <- as.character(result[,input$col_to_convert])
+        data(result)
+      }else if(input$convert_type == 'factor'){
+        result[,input$col_to_convert] <- as.factor(result[,input$col_to_convert])
         data(result)
         
       }else{
         data(result)
       }
-
-      output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print'),search = list(regex = TRUE)),editable=TRUE,server = FALSE)
-      input$display_file_
-      output$str <- suppressWarnings(renderPrint({str(result[input$display_file_rows_all,])}))
-      output$desc <-suppressWarnings(renderPrint({psych::describe(result[input$display_file_rows_all,])}))
       
-      }}, warning = function(warn){
-        showNotification(paste0(warn), type = 'warning')
-      },
+    }
+    }, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
     error = function(err){
       showNotification(paste0(err), type = 'err')})
-    
-},ignoreNULL=TRUE, ignoreInit=TRUE)
+  })
   
-
+  #encode columns
+  observeEvent(c(input$col_to_encode,input$val_encode),{
+    tryCatch({
+  if(length(input$col_to_encode) != 0 & input$val_encode){
+    result <- data()
+    if(input$encode_type %in% "Numerical"){
+      result[,input$col_to_encode] <- as.numeric(as.factor(result[,input$col_to_encode]))
+      data(result)
+    }else if(input$encode_type %in% "One hot"){
+      col <- result[,input$col_to_encode]
+      col <- as.data.frame(col)
+      dummy <- dummyVars(" ~ .",data=col)
+      col_encoded <- data.frame(predict(dummy, newdata = col))
+      result <- result[,-which(names(result) %in% input$col_to_encode)]
+      result <- cbind(result,col_encoded)
+      data(result)
+    }else{
+      data(result)
+    }
+  }
+  }, warning = function(warn){
+    showNotification(paste0(warn), type = 'warning')
+  },
+  error = function(err){
+    showNotification(paste0(err), type = 'err')})  
+  })
+  
+  #edit cells
   observeEvent(input$display_file_cell_edit,{
     tryCatch({
       result <- data()
@@ -142,10 +196,39 @@ shinyServer(function(input,output,session){
     },
     error = function(err){
       showNotification(paste0(err), type = 'err')})
-
-
   })
   
+  #rename columns
+  observeEvent(c(input$rename_col,input$rename_col_name,input$rename),{
+  tryCatch({
+  if(length(input$rename_col) != 0 & length(input$rename_col_name) != 0 & input$rename){
+    result <- data()
+    names(result)[names(result) == input$rename_col] <- input$rename_col_name
+    data(result)
+  }
+  }, warning = function(warn){
+    showNotification(paste0(warn), type = 'warning')
+  },
+  error = function(err){
+    showNotification(paste0(err), type = 'err')})
+  })
+  
+  
+  observeEvent(c(input$split_col,input$split_col_sep,input$split),{
+  tryCatch({
+  if(length(input$split_col) != 0 & length(input$split_col_sep) != 0 & input$split){
+    result <- data()
+    splited <- stringr::str_split_fixed(result[,input$split_col],input$split_col_sep,2)
+    splited <- as.data.frame(splited)
+    result <- cbind(result,splited)
+    data(result)
+  }
+  }, warning = function(warn){
+    showNotification(paste0(warn), type = 'warning')
+  },
+  error = function(err){
+    showNotification(paste0(err), type = 'err')})
+  })
   
   
   
@@ -164,8 +247,7 @@ shinyServer(function(input,output,session){
     }
   })
   
-  l <- reactive({list(data(),input$file)})
-  observeEvent(l(),{
+  observeEvent(c(data(),input$file),{
     req(data())
     tryCatch({
       if(!is.null(input$file)){
@@ -325,6 +407,11 @@ shinyServer(function(input,output,session){
       
       outputOptions(output, "split", suspendWhenHidden = FALSE)
       
+      output$override_datasets <- renderUI({
+        actionButton(style="margin-bottom : 20px; background-color :#f50057;color:#ffffff;","override_datasets","Override datasets")
+      })
+      
+      outputOptions(output, "override_datasets", suspendWhenHidden = FALSE)
       
     }
     }, warning = function(warn){
@@ -333,10 +420,33 @@ shinyServer(function(input,output,session){
     error = function(err){
       showNotification(paste0(err), type = 'err')})
     
+})
 
+    observeEvent(input$override_datasets,{
+      showModal(modalDialog(
+        title = "Warning",
+        "The current data will be overrided by the filter one. Please confirm and dismiss.",
+        footer = tagList(
+          modalButton("Dimiss"),
+          actionButton(style="background-color : #f50057; color : #ffffff;","confirm_override", "Confirm")
+        )
+      ))
+    })
+    
+    observeEvent(input$confirm_override,{
+      tryCatch({
+        if(input$confirm_override){
+          result <- data()
+          print(input$display_file_rows_all)
+          result <- result[input$display_file_rows_all,]
+          removeModal()
+          data(result)
+        }
+        
+      })
+      
+    })
 
-  
-  })
   
   observeEvent(input$show_unique,{
     result <- data()
@@ -358,33 +468,48 @@ shinyServer(function(input,output,session){
         pickerInput("select_plot",label="Select your plot",choices=plots)
       })
       
+      outputOptions(output, "select_plot", suspendWhenHidden = FALSE)
+      
       output$select_x <- renderUI({
         pickerInput("select_x",label="Select your x axis",choices=colnames(data()),selected="")
       })
+      
+      outputOptions(output, "select_x", suspendWhenHidden = FALSE)
       
       output$dodge <- renderUI({
         radioButtons("dodge", "Position",choices=c("dodge","identity"),selected="identity")
       })
       
+      outputOptions(output, "dodge", suspendWhenHidden = FALSE)
+      
       output$select_y <- renderUI({
         pickerInput("select_y",label="Select your y axis",choices=colnames(data()),selected="")
       })
       
+      outputOptions(output, "select_y", suspendWhenHidden = FALSE)
+      
       output$select_color <- renderUI({
         pickerInput("select_color",label="Select your label color",choices=c(colnames(data()),"None"=""),selected="")
       })
+      outputOptions(output, "select_color", suspendWhenHidden = FALSE)
 
       output$plot_graph <- renderUI({
         actionButton("plot_graph","Plot")
       })
       
+      outputOptions(output, "plot_graph", suspendWhenHidden = FALSE)
+      
       output$facet_wrap <- renderUI({
         pickerInput("facet_wrap",label="Select facet wrap",choices=c(colnames(data())),multiple=TRUE,options = pickerOptions(maxOptions = 2))
       })
       
+      outputOptions(output, "facet_wrap", suspendWhenHidden = FALSE)
+      
       output$facet_orientation <- renderUI({
         radioButtons("facet_orientation", "facet orientation",choices=c("Vertical","Horizontal"),selected="Vertical")
       })
+      
+      outputOptions(output, "facet_orientation", suspendWhenHidden = FALSE)
       
       output$x_axis_slider <- renderUI({
         sliderInput("x_axis_slider","x label orientation",min=0,max=90,value=45)
@@ -394,21 +519,31 @@ shinyServer(function(input,output,session){
         sliderInput("y_axis_slider","y label orientation",min=0,max=90,value=45)
       })
       
+      outputOptions(output, "y_axis_slider", suspendWhenHidden = FALSE)
+      
       output$vertical_adjustment_x <- renderUI({
         sliderInput("vertical_adjustment_x","vertical adjustment for x axis",min=0,max=1,value=0.5)
       })
+      
+      outputOptions(output, "vertical_adjustment_x", suspendWhenHidden = FALSE)
       
       output$horizontal_adjustment_x <- renderUI({
         sliderInput("horizontal_adjustment_x","horizontal adjustment for x axis",min=0,max=1,value=1)
       })
       
+      outputOptions(output, "horizontal_adjustment_x", suspendWhenHidden = FALSE)
+      
       output$vertical_adjustment_y <- renderUI({
         sliderInput("vertical_adjustment_y","vertical adjustment for y axis",min=0,max=1,value=0.5)
       })
       
+      outputOptions(output, "vertical_adjustment_y", suspendWhenHidden = FALSE)
+      
       output$horizontal_adjustment_y <- renderUI({
         sliderInput("horizontal_adjustment_y","horizontal adjustment for y axis",min=0,max=1,value=1)
       })
+      
+      outputOptions(output, "horizontal_adjustment_y", suspendWhenHidden = FALSE)
       
 
     }
@@ -660,9 +795,8 @@ shinyServer(function(input,output,session){
 
   })
   
-  join <- reactive({list(input$select_join, input$join_by)})
   
-  observeEvent(join(),{
+  observeEvent(c(input$select_join, input$join_by),{
     result <- data()
     tryCatch({
           if(!is.null(input$select_join) & !is.null(input$join_by)){
@@ -707,7 +841,7 @@ shinyServer(function(input,output,session){
       title = "Warning",
       "The current data will be overrided. Please confirm and dismiss.",
       footer = tagList(
-        modalButton("Cancel"),
+        modalButton("Dismiss"),
         actionButton(style="background-color : #f50057; color : #ffffff;","confirm", "Confirm")
       )
     ))

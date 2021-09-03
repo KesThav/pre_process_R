@@ -10,6 +10,7 @@ library(datasets)
 library(mltools)
 library(ggcorrplot)
 library(GGally)
+library(e1071)
 
 shinyServer(function(input,output,session){
   
@@ -876,54 +877,66 @@ shinyServer(function(input,output,session){
   
   
   observeEvent(data(),{
-    
-    output$select_models <- renderUI({
-      pickerInput("select_models","Select your model",choices=c("Linear regression","Classification","Other"))
-    })
-    
-    output$split_or_load <- renderUI({
-      radioButtons("split_or_load", "Split or load",choices=c("Split dataset (train/test)" ="split","load dataset (test)" = "load"),selected="split")
-    })
-    output$label_column <- renderUI({
-      pickerInput("label_column","Select the label column",choices=colnames(data()))
-    })
-    
-    output$label_used_to_predict <- renderUI({
-      col <- colnames(data())
-      col <- col[col != input$label_column]
-      pickerInput("label_used_to_predict","Select the label column",choices=col,multiple=TRUE)
-    })
-    output$predict <- renderUI({
-      actionButton("predict","Predict")
-    })
-  })
-  
-  observeEvent(input$split_or_load,{
-    if(input$split_or_load == "split"){
-      output$split_size <- renderUI({
-        sliderInput("split_size","Split size",min=0, max=1,value = 0.75)
+    tryCatch({
+      output$select_models <- renderUI({
+        pickerInput("select_models","Select your model",choices=c("Linear regression","SVM"))
       })
-      outputOptions(output, "split_size", suspendWhenHidden = FALSE)
-
-    }else{
+      
+      output$kernel <- renderUI({
+        pickerInput("kernel","Select kernel",choices=c("linear","polynomial","radial","sigmoid"),selected="sigmoid")
+      })
+      
+      output$split_or_load <- renderUI({
+        radioButtons("split_or_load", "Split or load",choices=c("Split dataset (train/test)","load dataset (test)"),selected="Split dataset (train/test)")
+      })
+      
       output$load_test <- renderUI({
         fileInput("load_test","Load test file",multiple=FALSE,accept = c("text/csv",
                                                                          "text/comma-separated-values,text/plain",
                                                                          ".csv"))
       })
+      output$split_size <- renderUI({
+        sliderInput("split_size","Split size",min=0.1, max=0.95,value = 0.75)
+      })
+      
+      output$label_column <- renderUI({
+        pickerInput("label_column","Select the label column",choices=colnames(data()))
+      })
+      
+      output$label_used_to_predict <- renderUI({
+        col <- colnames(data())
+        col <- col[col != input$label_column]
+        pickerInput("label_used_to_predict","Select the label column",choices=col,multiple=TRUE)
+      })
+      output$predict <- renderUI({
+        actionButton("predict","Predict")
+      })
+      outputOptions(output, "split_size", suspendWhenHidden = FALSE)
       outputOptions(output, "load_test", suspendWhenHidden = FALSE)
-
-    }
+      
+    }, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
     
   })
   
-  observeEvent(input$split_or_load,{
-    if(input$split_or_load == 'split'){
-      shinyjs::hide("load_test")
-      shinyjs::show("split_size")
+
+  
+  observeEvent(c(input$split_or_load,input$select_models),{
+    if(input$split_or_load == "Split dataset (train/test)"){
+      shinyjs::hide(id="load_test")
+      shinyjs::show(id="split_size")
+      shinyjs::hide(id="kernel")
     }else{
-      shinyjs::show("load_test")
-      shinyjs::hide("split_size")
+      shinyjs::show(id="load_test")
+      shinyjs::hide(id="split_size")
+      shinyjs::hide(id="kernel")
+    }
+    
+    if(input$select_models == "SVM"){
+      shinyjs::show(id="kernel")
     }
   })
   
@@ -931,7 +944,7 @@ shinyServer(function(input,output,session){
   
   observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test,input$label_column),{
     tryCatch({
-    if(input$split_or_load == "split" & !is.null(input$split_size) & input$split_size != 0){
+    if(input$split_or_load == "Split dataset (train/test)" & !is.null(input$split_size)){
       req(input$split_or_load,input$split_size)
       result <- data()
       sample <- sample.int(n = nrow(result), size = floor(input$split_size*nrow(result)), replace = F)
@@ -946,7 +959,7 @@ shinyServer(function(input,output,session){
         df$test
       })
     }
-    else if(input$split_or_load == "load" & !is.null(input$load_test)){
+    else if(input$split_or_load == "load dataset (test)" & !is.null(input$load_test)){
       req(input$split_or_load,input$load_test)
       result <- data()
       train <- result
@@ -970,14 +983,26 @@ shinyServer(function(input,output,session){
       showNotification(paste0(err), type = 'err')})
   })
   
-  observeEvent(c(input$predict,input$label_column,input$label_used_to_predict),{
+  observeEvent(c(input$predict,input$label_column,input$label_used_to_predict,input$kernel),{
     tryCatch({
-      col <- colnames(df$train)
-      formula <- paste(input$label_column,paste(input$label_used_to_predict,collapse = " + "),sep =" ~ ")
-      model <- lm(formula,data=df$train)
-      output$prediction_data <- renderPrint({model})
-      colnames_test <- df$test[names(df$test) != input$label_column]
-      predict_output <- as.data.frame(predict(model,colnames_test))
+      if(input$select_models == 'Linear regression'){
+        col <- colnames(df$train)
+        formula <- paste(input$label_column,paste(input$label_used_to_predict,collapse = " + "),sep =" ~ ")
+        model <- lm(formula,data=df$train)
+        output$prediction_data <- renderPrint({model})
+        colnames_test <- df$test[names(df$test) != input$label_column]
+        predict_output <- as.data.frame(predict(model,colnames_test))
+      }else if(input$select_models == 'SVM'){
+        col <- colnames(df$train)
+        formula <- reformulate(paste(input$label_used_to_predict,collapse = " + "),input$label_column,)
+        model <- svm(formula, data = df$train, type="C-classification", kernel = input$kernel, cost = 1)
+        output$prediction_data <- renderPrint({model})
+        colnames_test <- df$test[names(df$test) != input$label_column]
+        predict_output <- as.data.frame(predict(model,colnames_test))
+      }else{
+        
+      }
+
       output$prediction <- renderDataTable({
         predict_output
       })

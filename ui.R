@@ -156,6 +156,7 @@ shinyUI(dashboardPage(
                                           fluidRow(
                                             column(width=4, box(width=12,
                                                                 uiOutput("select_models"),
+                                                                hidden(div(id="kernel",uiOutput("kernel"))),
                                                                 uiOutput("split_or_load"),
                                                                 hidden(div(id="split_size",uiOutput("split_size"))),
                                                                 hidden(div(id="load_test",uiOutput("load_test"))),

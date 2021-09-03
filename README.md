@@ -57,7 +57,8 @@ After joining, merged file can be either export or use as current dataset.
 
 ## ML models
 - Linear regression
-- Classification [coming]
+- SVM
+   - linear, polynomial, radial and sigmoid 
 
 # Getting started
 

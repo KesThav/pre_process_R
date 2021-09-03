@@ -148,7 +148,38 @@ shinyUI(dashboardPage(
                                           ),
                                   
                                   
-                                  tabItem(tabName="ml",h1("ML models"))
+                                  tabItem(tabName="ml",
+                                          
+                                          fluidRow(h1("ML models")),
+                                          
+                                          
+                                          fluidRow(
+                                            column(width=4, box(width=12,
+                                                                uiOutput("select_models"),
+                                                                uiOutput("split_or_load"),
+                                                                hidden(div(id="split_size",uiOutput("split_size"))),
+                                                                hidden(div(id="load_test",uiOutput("load_test"))),
+                                                                uiOutput("label_column"),
+                                                                uiOutput("label_used_to_predict"),
+                                                                uiOutput("predict")
+                                                                )),
+                                            
+                                            column(width=8,tabBox(width=12,
+                                                                tabPanel(style="overflow-x : scroll;","train_set",
+                                                                         DT::dataTableOutput("train_set")),
+                                                                tabPanel(style="overflow-x : scroll;","test set",
+                                                                         DT::dataTableOutput("test_set")),
+                                                                tabPanel(style="overflow-x : scroll;","Prediction",
+                                                                         DT::dataTableOutput("prediction"))
+                                                                
+                                            )),
+                                            
+                                          ),
+                                          fluidRow(
+                                            column(width=4),
+                                            column(width=8,box(width=12,verbatimTextOutput("prediction_data")))
+                                          )
+                                           )
 
                                   
                                   

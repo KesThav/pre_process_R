@@ -9,6 +9,7 @@ library(caret)
 library(datasets)
 library(mltools)
 library(ggcorrplot)
+library(GGally)
 
 shinyServer(function(input,output,session){
   
@@ -458,7 +459,7 @@ shinyServer(function(input,output,session){
 ##############################################################################################################################################################
 #Analyze
 
-  plots <- c("scatter plot","bar chart","boxplot","violin plot","pie chart","correlogram")
+  plots <- c("scatter plot","bar chart","boxplot","violin plot","pie chart","correlogram","pairplot")
   
   observeEvent(data(),{
     tryCatch({
@@ -594,7 +595,7 @@ shinyServer(function(input,output,session){
       shinyjs::hide(id="facet_wrap")
       shinyjs::hide(id="facet_orientation")
     
-    }else if(input$select_plot %in% c("dendrogram")){
+    }else if(input$select_plot %in% c("pairplot")){
       
     }else{
       
@@ -716,6 +717,10 @@ shinyServer(function(input,output,session){
           ggcorrplot::ggcorrplot(p.mat)
           
           
+        }else if(input$select_plot %in% "pairplot"){
+          result <- data()
+          ggpairs(data=result)
+        
         }else{
           
         }
@@ -862,7 +867,136 @@ shinyServer(function(input,output,session){
     }
   )
   
-  
-})
 
   
+##############################################################################################################################################################
+##############################################################################################################################################################
+##############################################################################################################################################################
+#ML models
+  
+  
+  observeEvent(data(),{
+    
+    output$select_models <- renderUI({
+      pickerInput("select_models","Select your model",choices=c("Linear regression","Classification","Other"))
+    })
+    
+    output$split_or_load <- renderUI({
+      radioButtons("split_or_load", "Split or load",choices=c("Split dataset (train/test)" ="split","load dataset (test)" = "load"),selected="split")
+    })
+    output$label_column <- renderUI({
+      pickerInput("label_column","Select the label column",choices=colnames(data()))
+    })
+    
+    output$label_used_to_predict <- renderUI({
+      col <- colnames(data())
+      col <- col[col != input$label_column]
+      pickerInput("label_used_to_predict","Select the label column",choices=col,multiple=TRUE)
+    })
+    output$predict <- renderUI({
+      actionButton("predict","Predict")
+    })
+  })
+  
+  observeEvent(input$split_or_load,{
+    if(input$split_or_load == "split"){
+      output$split_size <- renderUI({
+        sliderInput("split_size","Split size",min=0, max=1,value = 0.75)
+      })
+      outputOptions(output, "split_size", suspendWhenHidden = FALSE)
+
+    }else{
+      output$load_test <- renderUI({
+        fileInput("load_test","Load test file",multiple=FALSE,accept = c("text/csv",
+                                                                         "text/comma-separated-values,text/plain",
+                                                                         ".csv"))
+      })
+      outputOptions(output, "load_test", suspendWhenHidden = FALSE)
+
+    }
+    
+  })
+  
+  observeEvent(input$split_or_load,{
+    if(input$split_or_load == 'split'){
+      shinyjs::hide("load_test")
+      shinyjs::show("split_size")
+    }else{
+      shinyjs::show("load_test")
+      shinyjs::hide("split_size")
+    }
+  })
+  
+  df <- reactiveValues(train=NULL,test=NULL)
+  
+  observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test,input$label_column),{
+    tryCatch({
+    if(input$split_or_load == "split" & !is.null(input$split_size) & input$split_size != 0){
+      req(input$split_or_load,input$split_size)
+      result <- data()
+      sample <- sample.int(n = nrow(result), size = floor(input$split_size*nrow(result)), replace = F)
+      train <- result[sample,]
+      test <- result[-sample,]
+      df$train <- train
+      df$test <- test
+      output$train_set <- renderDataTable({
+        df$train
+      })
+      output$test_set <- renderDataTable({
+        df$test
+      })
+    }
+    else if(input$split_or_load == "load" & !is.null(input$load_test)){
+      req(input$split_or_load,input$load_test)
+      result <- data()
+      train <- result
+      f_ <- input$load_test
+      test <- read.csv(f_$datapath,header=TRUE)
+      df$train <- train
+      df$test <- test
+      output$train_set <- renderDataTable({
+        df$train
+      })
+      output$test_set <- renderDataTable({
+        df$test
+      })
+    }else{
+      
+    }
+    }, warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+  })
+  
+  observeEvent(c(input$predict,input$label_column,input$label_used_to_predict),{
+    tryCatch({
+      col <- colnames(df$train)
+      formula <- paste(input$label_column,paste(input$label_used_to_predict,collapse = " + "),sep =" ~ ")
+      model <- lm(formula,data=df$train)
+      output$prediction_data <- renderPrint({model})
+      colnames_test <- df$test[names(df$test) != input$label_column]
+      predict_output <- as.data.frame(predict(model,colnames_test))
+      output$prediction <- renderDataTable({
+        predict_output
+      })
+      
+    },warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+    
+    
+  })
+  
+  
+  
+  
+
+  
+  
+
+})
+

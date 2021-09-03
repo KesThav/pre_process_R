@@ -29,6 +29,7 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 - Violin plot
 - Pie chart
 - Correlogram
+- Pair plot
 ### Plotting parameters
 - x axis
 - y axis
@@ -55,7 +56,8 @@ Load two files and join them. PPR automatically detects columns with same name o
 After joining, merged file can be either export or use as current dataset.
 
 ## ML models
-coming...
+- Linear regression
+- Classification [coming]
 
 # Getting started
 

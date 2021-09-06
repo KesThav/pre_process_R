@@ -11,6 +11,7 @@ library(mltools)
 library(ggcorrplot)
 library(GGally)
 library(e1071)
+library(caret)
 
 shinyServer(function(input,output,session){
   
@@ -233,7 +234,7 @@ shinyServer(function(input,output,session){
   })
   
   
-  
+
   observeEvent(input$file, {
     
     if(length(data() > 0)){
@@ -415,6 +416,22 @@ shinyServer(function(input,output,session){
       
       outputOptions(output, "override_datasets", suspendWhenHidden = FALSE)
       
+      
+      output$col_to_encode_special <- renderUI({
+        pickerInput("col_to_encode_special", "Select column to encode",choices=colnames(data()))
+      })
+      
+      outputOptions(output, "col_to_encode_special", suspendWhenHidden = FALSE)
+      
+      output$encode_data <- renderUI({
+        numericInput("encode_data","Encode with",value=1)
+      })
+      
+      outputOptions(output, "encode_data", suspendWhenHidden = FALSE)
+      
+      output$val_encode_special <- renderUI({
+        actionButton("val_encode_special","Apply special encoding")
+      })
     }
     }, warning = function(warn){
       showNotification(paste0(warn), type = 'warning')
@@ -423,6 +440,22 @@ shinyServer(function(input,output,session){
       showNotification(paste0(err), type = 'err')})
     
 })
+  
+    #show variable of column to encode
+    observeEvent(input$col_to_encode_special,{
+      req(input$col_to_encode_special)
+      output$variables <- renderUI({
+        result <- data()
+        pickerInput("variables","Select variables to encode",choices=(unique(result[,input$col_to_encode_special])),multiple=TRUE)
+      })
+    })
+    
+    #special encode validation
+    observeEvent(c(input$val_encode_special),{
+      result <- data()
+      result[,c(input$col_to_encode_special)] <- ifelse(result[,c(input$col_to_encode_special)] %in% input$variables,input$encode_data,result[,c(input$col_to_encode_special)])
+      data(result)
+    })
 
     observeEvent(input$override_datasets,{
       showModal(modalDialog(
@@ -434,6 +467,7 @@ shinyServer(function(input,output,session){
         )
       ))
     })
+  
     
     observeEvent(input$confirm_override,{
       tryCatch({
@@ -454,6 +488,7 @@ shinyServer(function(input,output,session){
     result <- data()
     output$unique <- suppressWarnings(renderPrint({unique(result[input$display_file_rows_all,input$show_unique])}))
   })
+  
   
 ##############################################################################################################################################################
 ##############################################################################################################################################################
@@ -736,6 +771,8 @@ shinyServer(function(input,output,session){
       showNotification(paste0(err), type = 'err')})
   })
   
+
+  
   ##############################################################################################################################################################
   ##############################################################################################################################################################
   ##############################################################################################################################################################
@@ -879,7 +916,7 @@ shinyServer(function(input,output,session){
   observeEvent(data(),{
     tryCatch({
       output$select_models <- renderUI({
-        pickerInput("select_models","Select your model",choices=c("Linear regression","SVM"))
+        pickerInput("select_models","Select your model",choices=c("Linear regression"="lm","SVM"="svmLinear"))
       })
       
       output$kernel <- renderUI({
@@ -895,19 +932,30 @@ shinyServer(function(input,output,session){
                                                                          "text/comma-separated-values,text/plain",
                                                                          ".csv"))
       })
+      
+      output$load_predict_datasets <- renderUI({
+        fileInput("load_predict_datasets","Load dataset to predict",multiple=FALSE,accept = c("text/csv",
+                                                                         "text/comma-separated-values,text/plain",
+                                                                         ".csv"))
+      })
+      
       output$split_size <- renderUI({
         sliderInput("split_size","Split size",min=0.1, max=0.95,value = 0.75)
       })
       
       output$label_column <- renderUI({
-        pickerInput("label_column","Select the label column",choices=colnames(data()))
+        pickerInput("label_column","Select the label column",choices=colnames(data()),selected=colnames(data()))
       })
       
       output$label_used_to_predict <- renderUI({
         col <- colnames(data())
         col <- col[col != input$label_column]
-        pickerInput("label_used_to_predict","Select the label column",choices=col,multiple=TRUE)
+        pickerInput("label_used_to_predict","Select the columns used to predict",choices=col,multiple=TRUE,selected=(colnames(data())))
       })
+      output$train_model <- renderUI({
+        actionButton("train_model","Train model")
+      })
+      
       output$predict <- renderUI({
         actionButton("predict","Predict")
       })
@@ -942,7 +990,7 @@ shinyServer(function(input,output,session){
   
   df <- reactiveValues(train=NULL,test=NULL)
   
-  observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test,input$label_column),{
+  observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test),{
     tryCatch({
     if(input$split_or_load == "Split dataset (train/test)" & !is.null(input$split_size)){
       req(input$split_or_load,input$split_size)
@@ -981,9 +1029,10 @@ shinyServer(function(input,output,session){
     },
     error = function(err){
       showNotification(paste0(err), type = 'err')})
-  })
+  },ignoreNULL = TRUE,ignoreInit = TRUE)
   
-  observeEvent(c(input$predict,input$label_column,input$label_used_to_predict,input$kernel),{
+  observeEvent(c(input$predict,input$label_column,input$label_used_to_predict,input$kernel,input$load_predict_datasets),{
+    req(input$load_predict_datasets)
     tryCatch({
       if(input$select_models == 'Linear regression'){
         col <- colnames(df$train)
@@ -1016,8 +1065,31 @@ shinyServer(function(input,output,session){
     
   })
   
+  ml_train <- function(method,train_x,test_y){
+    fitControl <- trainControl(method="repeatedcv",number=10,repeats=10)
+    if(method=="lm"){
+      train_model <- train(train_x,test_y,method=method,trControl=fitControl)
+    }else{
+      train_model <- train(train_x,as.factor(test_y),method=method,trControl=fitControl)
+    }
+    return(train_model)
+  }
   
   
+  observeEvent(input$train_model,{
+    tryCatch({
+    train_x <- df$train[,c(input$label_used_to_predict)]
+    train_y <- df$train[,c(input$label_column)]
+    ml_train_m <- ml_train(input$select_models,train_x=train_x,test_y=train_y)
+    print(ml_train_m)
+    output$prediction_data <- renderPrint({ml_train_m})
+    },warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+
+  })
   
 
   

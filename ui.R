@@ -67,7 +67,12 @@ shinyUI(dashboardPage(
                                                                         tabPanel("Encode variables",
                                                                                  uiOutput("col_to_encode"),
                                                                                  uiOutput("encode_type"),
-                                                                                 uiOutput("val_encode")),
+                                                                                 uiOutput("val_encode"),
+                                                                                 hr(),
+                                                                                 uiOutput("col_to_encode_special"),
+                                                                                 uiOutput("variables"),
+                                                                                 uiOutput("encode_data"),
+                                                                                 uiOutput("val_encode_special")),
                                                                         tabPanel("More options",
                                                                                  uiOutput("na"),
                                                                                  uiOutput("reset"))))),
@@ -162,7 +167,8 @@ shinyUI(dashboardPage(
                                                                 hidden(div(id="load_test",uiOutput("load_test"))),
                                                                 uiOutput("label_column"),
                                                                 uiOutput("label_used_to_predict"),
-                                                                uiOutput("predict")
+                                                                uiOutput("load_predict_datasets"),
+                                                                div(style="display : flex; flex-direction : row; justify-content : space-between; width : 175px;",uiOutput("train_model"),uiOutput("predict"))
                                                                 )),
                                             
                                             column(width=8,tabBox(width=12,

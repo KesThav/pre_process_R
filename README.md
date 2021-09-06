@@ -9,6 +9,7 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 - Drop NA
 - Merge columns by specifying a name and a separator
 - Encode columns (Numerical and One hot)
+- Manual encoding
 - Convert column's type (integer, double, character and factor)
 - Split columns using separator
 - Rename columns

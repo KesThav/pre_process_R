@@ -58,8 +58,10 @@ After joining, merged file can be either export or use as current dataset.
 
 ## ML models
 - Linear regression
-- SVM
-   - linear, polynomial, radial and sigmoid 
+- SVM (Linear)
+- SVM (Polynomial)
+- Random Forest
+- Linear discriminant Analysis
 
 # Getting started
 

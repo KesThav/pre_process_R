@@ -69,3 +69,5 @@ After joining, merged file can be either export or use as current dataset.
 2. Install RStudio
 3. Open `server.R` and `ui.R` in RStudio
 4. Press `Run App` button
+
+or try it online : https://kassis.shinyapps.io/pre_process_r/

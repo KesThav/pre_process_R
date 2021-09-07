@@ -130,8 +130,9 @@ shinyUI(dashboardPage(
                                            ))),
                                   
                                   tabItem(tabName="join",
-                                          
-                                          fluidRow(h1("Join file")),
+                                          fluidRow(
+                                            box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_3", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
+                                          hidden(div(id="main_div_3",fluidRow(h1("Join file")),
                                           
                                           fluidRow(
                                             
@@ -150,16 +151,17 @@ shinyUI(dashboardPage(
                                                                                         
                                             )))
                                           
-                                          ),
+                                          ))),
                                   
                                   
                                   tabItem(tabName="ml",
-                                          
-                                          fluidRow(h1("ML models")),
+                                          fluidRow(
+                                            box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_4", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
+                                          hidden(div(id="main_div_4",fluidRow(h1("ML models")),
                                           
                                           
                                           fluidRow(
-                                            column(width=4, box(width=12,
+                                            column(width=4, box(width=12,solidHeader=TRUE,
                                                                 uiOutput("select_models"),
                                                                 uiOutput("split_or_load"),
                                                                 hidden(div(id="split_size",uiOutput("split_size"))),
@@ -184,7 +186,7 @@ shinyUI(dashboardPage(
                                           fluidRow(
                                             column(width=4),
                                             column(width=8,tabBox(width=12,
-                                                                  tabPanel("model_error",verbatimTextOutput("model_error")),
+                                                                  tabPanel("model_error",verbatimTextOutput("model_error"),verbatimTextOutput("test_set_accuracy")),
                                                                   tabPanel("finalModel",verbatimTextOutput("final_model"))))
                                           )
                                            )
@@ -193,7 +195,7 @@ shinyUI(dashboardPage(
                                   
 
 
-                                  )
+                                  )))
 
                                 
                                 )

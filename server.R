@@ -242,11 +242,19 @@ shinyServer(function(input,output,session){
       shinyjs::show(id="main_div")
       shinyjs::hide(id = "notif_2")
       shinyjs::show(id="main_div_2")
+      shinyjs::hide(id = "notif_3")
+      shinyjs::show(id="main_div_3")
+      shinyjs::hide(id = "notif_4")
+      shinyjs::show(id="main_div_4")
     }else{
       shinyjs::show(id = "notif")
       shinyjs::hide(id="main_div")
       shinyjs::show(id = "notif_2")
       shinyjs::hide(id="main_div_2")
+      shinyjs::show(id = "notif_3")
+      shinyjs::hide(id="main_div_3")
+      shinyjs::show(id = "notif_4")
+      shinyjs::hide(id="main_div_4")
     }
   })
   
@@ -916,7 +924,7 @@ shinyServer(function(input,output,session){
   observeEvent(data(),{
     tryCatch({
       output$select_models <- renderUI({
-        pickerInput("select_models","Select your model",choices=c("Linear regression"="lm","SVM"="svmLinear","Random Forest"="rf"))
+        pickerInput("select_models","Select your model",choices=c("Linear regression"="lm","SVM (Linear)"="svmLinear","SVM (Polynomial)"="svmPoly","Random Forest"="rf","Linear Discriminant Analysis"="lda"))
       })
       
       output$split_or_load <- renderUI({
@@ -977,7 +985,7 @@ shinyServer(function(input,output,session){
 
   })
   
-  df <- reactiveValues(train=NULL,test=NULL,pred=NULL,test_y=NULL,finalModel=NULL)
+  df <- reactiveValues(train=NULL,test=NULL,pred=NULL,test_y=NULL,finalModel=NULL,final_pred=NULL)
   
   observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test,input$label_used_to_predict),{
     req(input$split_or_load)
@@ -1025,6 +1033,7 @@ shinyServer(function(input,output,session){
   
   
   ml_train <- function(method,train_x,train_y){
+    
     fitControl <- trainControl(method="repeatedcv",number=10,repeats=10)
     if(method=="lm"){
       train_model <- train(train_x,train_y,method=method,trControl=fitControl)
@@ -1047,6 +1056,22 @@ shinyServer(function(input,output,session){
     output$predict <- renderUI({
       actionButton("predict","Predict")
     })
+    
+    #show prediction on test set with accuracy or mse
+    pred <- predict(df$finalModel,newdata=df$test)
+    df$pred <- cbind(df$test,as.data.frame(pred))
+    df$pred <- cbind(df$pred,df$test_y)
+    output$test_set <-  renderDataTable({
+      df$pred
+    })
+    if(input$select_models == "lm"){
+      test_accuracy <- sum(as.data.frame(pred) - df$test_y)^2/length(df$test_y)
+      output$test_set_accuracy <- renderPrint({paste("test set MSE : ", test_accuracy)})
+    }else{
+      test_accuracy <- sum(as.data.frame(pred) == df$test_y,na.rm = TRUE)/length(df$test_y)
+      output$test_set_accuracy <- renderPrint({paste("test set accuracy : ", test_accuracy*100,"%")})
+    }
+    
     },warning = function(warn){
       showNotification(paste0(warn), type = 'warning')
     },
@@ -1057,14 +1082,23 @@ shinyServer(function(input,output,session){
   
 
   observeEvent(input$predict,{
-    pred <- predict(df$finalModel,newdata=df$test)
-    df$pred <- cbind(df$test,as.data.frame(pred))
-    if(!is.null(df$test_y)){
-      df$pred <- cbind(df$pred,df$test_y)
-    }
-    output$prediction <-  renderDataTable({
-      df$pred
-    })
+    tryCatch({
+      file <- input$load_predict_datasets
+      data_to_predict <- read.csv(file$datapath,header=TRUE)
+      req(input$load_predict_datasets)
+      pred <- predict(df$finalModel,newdata=data_to_predict[,c(input$label_used_to_predict)])
+      df$final_pred <- as.data.frame(pred)
+      df$final_pred <- cbind(data_to_predict[,c(input$label_used_to_predict)],df$final_pred)
+    
+      output$prediction <- renderDataTable(
+        df$final_pred,extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print'),search = list(regex = TRUE)),editable=TRUE,server = FALSE
+      )
+    },warning = function(warn){
+      showNotification(paste0(warn), type = 'warning')
+    },
+    error = function(err){
+      showNotification(paste0(err), type = 'err')})
+
   })
   
 

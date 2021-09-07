@@ -161,7 +161,6 @@ shinyUI(dashboardPage(
                                           fluidRow(
                                             column(width=4, box(width=12,
                                                                 uiOutput("select_models"),
-                                                                hidden(div(id="kernel",uiOutput("kernel"))),
                                                                 uiOutput("split_or_load"),
                                                                 hidden(div(id="split_size",uiOutput("split_size"))),
                                                                 hidden(div(id="load_test",uiOutput("load_test"))),
@@ -184,7 +183,9 @@ shinyUI(dashboardPage(
                                           ),
                                           fluidRow(
                                             column(width=4),
-                                            column(width=8,box(width=12,verbatimTextOutput("prediction_data")))
+                                            column(width=8,tabBox(width=12,
+                                                                  tabPanel("model_error",verbatimTextOutput("model_error")),
+                                                                  tabPanel("finalModel",verbatimTextOutput("final_model"))))
                                           )
                                            )
 

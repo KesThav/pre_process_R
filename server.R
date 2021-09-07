@@ -916,11 +916,7 @@ shinyServer(function(input,output,session){
   observeEvent(data(),{
     tryCatch({
       output$select_models <- renderUI({
-        pickerInput("select_models","Select your model",choices=c("Linear regression"="lm","SVM"="svmLinear"))
-      })
-      
-      output$kernel <- renderUI({
-        pickerInput("kernel","Select kernel",choices=c("linear","polynomial","radial","sigmoid"),selected="sigmoid")
+        pickerInput("select_models","Select your model",choices=c("Linear regression"="lm","SVM"="svmLinear","Random Forest"="rf"))
       })
       
       output$split_or_load <- renderUI({
@@ -955,10 +951,8 @@ shinyServer(function(input,output,session){
       output$train_model <- renderUI({
         actionButton("train_model","Train model")
       })
-      
-      output$predict <- renderUI({
-        actionButton("predict","Predict")
-      })
+
+      outputOptions(output, "split_or_load", suspendWhenHidden = FALSE)
       outputOptions(output, "split_size", suspendWhenHidden = FALSE)
       outputOptions(output, "load_test", suspendWhenHidden = FALSE)
       
@@ -968,7 +962,7 @@ shinyServer(function(input,output,session){
     error = function(err){
       showNotification(paste0(err), type = 'err')})
     
-  })
+  },ignoreNULL = TRUE,ignoreInit = TRUE)
   
 
   
@@ -976,21 +970,17 @@ shinyServer(function(input,output,session){
     if(input$split_or_load == "Split dataset (train/test)"){
       shinyjs::hide(id="load_test")
       shinyjs::show(id="split_size")
-      shinyjs::hide(id="kernel")
     }else{
       shinyjs::show(id="load_test")
       shinyjs::hide(id="split_size")
-      shinyjs::hide(id="kernel")
     }
-    
-    if(input$select_models == "SVM"){
-      shinyjs::show(id="kernel")
-    }
+
   })
   
-  df <- reactiveValues(train=NULL,test=NULL)
+  df <- reactiveValues(train=NULL,test=NULL,pred=NULL,test_y=NULL,finalModel=NULL)
   
-  observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test),{
+  observeEvent(c(data(),input$split_or_load,input$split_size,input$load_test,input$label_used_to_predict),{
+    req(input$split_or_load)
     tryCatch({
     if(input$split_or_load == "Split dataset (train/test)" & !is.null(input$split_size)){
       req(input$split_or_load,input$split_size)
@@ -999,7 +989,8 @@ shinyServer(function(input,output,session){
       train <- result[sample,]
       test <- result[-sample,]
       df$train <- train
-      df$test <- test
+      df$test <- test[,names(test) %in% input$label_used_to_predict]
+      df$test_y <- test[,names(test) %in% input$label_column]
       output$train_set <- renderDataTable({
         df$train
       })
@@ -1031,46 +1022,14 @@ shinyServer(function(input,output,session){
       showNotification(paste0(err), type = 'err')})
   },ignoreNULL = TRUE,ignoreInit = TRUE)
   
-  observeEvent(c(input$predict,input$label_column,input$label_used_to_predict,input$kernel,input$load_predict_datasets),{
-    req(input$load_predict_datasets)
-    tryCatch({
-      if(input$select_models == 'Linear regression'){
-        col <- colnames(df$train)
-        formula <- paste(input$label_column,paste(input$label_used_to_predict,collapse = " + "),sep =" ~ ")
-        model <- lm(formula,data=df$train)
-        output$prediction_data <- renderPrint({model})
-        colnames_test <- df$test[names(df$test) != input$label_column]
-        predict_output <- as.data.frame(predict(model,colnames_test))
-      }else if(input$select_models == 'SVM'){
-        col <- colnames(df$train)
-        formula <- reformulate(paste(input$label_used_to_predict,collapse = " + "),input$label_column,)
-        model <- svm(formula, data = df$train, type="C-classification", kernel = input$kernel, cost = 1)
-        output$prediction_data <- renderPrint({model})
-        colnames_test <- df$test[names(df$test) != input$label_column]
-        predict_output <- as.data.frame(predict(model,colnames_test))
-      }else{
-        
-      }
-
-      output$prediction <- renderDataTable({
-        predict_output
-      })
-      
-    },warning = function(warn){
-      showNotification(paste0(warn), type = 'warning')
-    },
-    error = function(err){
-      showNotification(paste0(err), type = 'err')})
-    
-    
-  })
   
-  ml_train <- function(method,train_x,test_y){
+  
+  ml_train <- function(method,train_x,train_y){
     fitControl <- trainControl(method="repeatedcv",number=10,repeats=10)
     if(method=="lm"){
-      train_model <- train(train_x,test_y,method=method,trControl=fitControl)
+      train_model <- train(train_x,train_y,method=method,trControl=fitControl)
     }else{
-      train_model <- train(train_x,as.factor(test_y),method=method,trControl=fitControl)
+      train_model <- train(train_x,as.factor(train_y),method=method,trControl=fitControl)
     }
     return(train_model)
   }
@@ -1080,9 +1039,14 @@ shinyServer(function(input,output,session){
     tryCatch({
     train_x <- df$train[,c(input$label_used_to_predict)]
     train_y <- df$train[,c(input$label_column)]
-    ml_train_m <- ml_train(input$select_models,train_x=train_x,test_y=train_y)
-    print(ml_train_m)
-    output$prediction_data <- renderPrint({ml_train_m})
+    ml_train_m <- ml_train(input$select_models,train_x=train_x,train_y=train_y)
+    output$model_error <- renderPrint({ml_train_m})
+    output$final_model <- renderPrint({ml_train_m$finalModel})
+    df$finalModel <- ml_train_m
+    
+    output$predict <- renderUI({
+      actionButton("predict","Predict")
+    })
     },warning = function(warn){
       showNotification(paste0(warn), type = 'warning')
     },
@@ -1092,7 +1056,16 @@ shinyServer(function(input,output,session){
   })
   
 
-  
+  observeEvent(input$predict,{
+    pred <- predict(df$finalModel,newdata=df$test)
+    df$pred <- cbind(df$test,as.data.frame(pred))
+    if(!is.null(df$test_y)){
+      df$pred <- cbind(df$pred,df$test_y)
+    }
+    output$prediction <-  renderDataTable({
+      df$pred
+    })
+  })
   
 
 })

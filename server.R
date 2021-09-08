@@ -12,11 +12,22 @@ library(ggcorrplot)
 library(GGally)
 library(e1071)
 library(caret)
+library(plotly)
+library(purrr)
+library(kernlab)
+library(MASS)
+library(randomForest)
 
 shinyServer(function(input,output,session){
   
 #Preprocess
   data <- reactiveVal()
+  
+#replace NA function
+  completeFun <- function(data, desiredCols) {
+    completeVec <- complete.cases(data[, desiredCols])
+    return(data[completeVec, ])
+  }
 
 
   #read file
@@ -68,15 +79,51 @@ shinyServer(function(input,output,session){
   #delete na
   observeEvent(input$na,{
     tryCatch({
-    if(input$na){
       result <- data()
-      result <- result %>% tidyr::drop_na()
+      result <- completeFun(result,c(input$na_select))
       data(result)
-    }}, warning = function(warn){
+    }, warning = function(warn){
       showNotification(paste0(warn), type = 'warning')
     },
     error = function(err){
       showNotification(paste0(err), type = 'err')})
+  })
+  
+  #replace na
+  observeEvent(input$replace_na,{
+    req(input$na_select_replace,input$na_replace_by)
+    result <- data()
+    if(input$na_replace_by == 'Mean'){
+      for(item in input$na_select_replace){
+        print(item)
+        mean_ <- mean(result[,item],na.rm=TRUE)
+        result[,item] <- ifelse(is.na(result[,item]),mean_,result[,item])
+        print(mean_)
+        data(result)
+      }
+      
+    }else if(input$na_replace_by == "Mode"){
+      for(item in input$na_select_replace){
+        mode_ <- mode(result[,item],na.rm=TRUE)
+        result[,item] <- ifelse(is.na(result[,item]),mode_,result[,item])
+        data(result)
+      }
+      
+    }else if(input$na_replace_by == "Median"){
+      
+      for(item in input$na_select_replace){
+        median_ <- median(result[,item],na.rm=TRUE)
+        result[,item] <- ifelse(is.na(result[,item]),median_,result[,item])
+        data(result)
+      }
+      
+    }else{
+      for(item in input$na_select_replace){
+        result[,item] <- ifelse(is.na(result[,item]),0,result[,item])
+        data(result)
+      }
+      
+    }
   })
   
   #delete columns
@@ -260,12 +307,38 @@ shinyServer(function(input,output,session){
   
   observeEvent(c(data(),input$file),{
     req(data())
+    
+    colnames_with_na <- colnames(data())[colSums(is.na(data())) > 0]
     tryCatch({
       if(!is.null(input$file)){
         output$na <- renderUI({
-        checkboxInput("na","Drop na",value = FALSE)
+        actionButton("na","Drop na",value = FALSE)
       })
-        outputOptions(output, "na", suspendWhenHidden = FALSE)
+        
+      output$na_select <- renderUI({
+        pickerInput("na_select","Drop na from columns : ",choices=colnames_with_na,multiple=TRUE,selected=colnames_with_na)
+      })
+      outputOptions(output, "na", suspendWhenHidden = FALSE)
+      
+      outputOptions(output, "na_select", suspendWhenHidden = FALSE)
+      
+      output$na_select_replace <- renderUI({
+        pickerInput("na_select_replace","Replace na from columns : ",choices=colnames_with_na,multiple=TRUE,selected=colnames_with_na)
+      })
+      
+      output$na_replace_by <- renderUI({
+        pickerInput("na_replace_by","By :",choices=c("Mean","Median","Mode","0"))
+      })
+      
+      output$replace_na <- renderUI({
+        actionButton("replace_na","Replace na",value = FALSE)
+      })
+      
+      outputOptions(output, "na_replace_by", suspendWhenHidden = FALSE)
+      
+      outputOptions(output, "na_select_replace", suspendWhenHidden = FALSE)
+      
+      outputOptions(output, "replace_na", suspendWhenHidden = FALSE)
         
       output$merge_col <- renderUI({
         pickerInput("merge_col",label="Select columns to merge",choices=colnames(data()), multiple=TRUE)
@@ -396,6 +469,13 @@ shinyServer(function(input,output,session){
           "Columns", length(colnames(data())), icon = icon("list"),
           color = "blue"
         )
+      })
+      
+      output$data_na <- renderInfoBox({
+        suppressWarnings(infoBox(
+          "Number of na", sum(is.na(data())), icon = icon("list"),
+          color = "blue"
+        ))
       })
       
       outputOptions(output, "data_columns", suspendWhenHidden = FALSE)
@@ -748,7 +828,7 @@ shinyServer(function(input,output,session){
           if(!is.null(data())){
             result <- data()
             data_to_plot <- NULL
-            data_to_plot <- result %>% group_by(get(input$select_y)) %>% count()
+            data_to_plot <- result %>% dplyr::group_by(get(input$select_y)) %>% count()
             colnames(data_to_plot) <- c("cat","value")
             
             
@@ -1033,13 +1113,14 @@ shinyServer(function(input,output,session){
   
   
   ml_train <- function(method,train_x,train_y){
-    
+    showModal(modalDialog("Loading...", footer=NULL))
     fitControl <- trainControl(method="repeatedcv",number=10,repeats=10)
     if(method=="lm"){
       train_model <- train(train_x,train_y,method=method,trControl=fitControl)
     }else{
       train_model <- train(train_x,as.factor(train_y),method=method,trControl=fitControl)
     }
+    removeModal()
     return(train_model)
   }
   

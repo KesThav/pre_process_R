@@ -6,7 +6,8 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 
 ## Pre-processing
 - See details for each columns (data types, statistic informations and unique values)
-- Drop NA
+- Drop NA using specific columns
+- Replace NA of specific columns by median, mean, mode or 0
 - Merge columns by specifying a name and a separator
 - Encode columns (Numerical and One hot)
 - Manual encoding

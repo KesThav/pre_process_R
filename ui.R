@@ -3,7 +3,7 @@ library(shinydashboard)
 library(DT)
 library(shinyjs)
 library(plotly)
-
+library(rsconnect)
 
 
 shinyUI(dashboardPage(
@@ -11,13 +11,11 @@ shinyUI(dashboardPage(
                   dashboardSidebar(width = 350,
                                    useShinyjs(),
                                   sidebarMenu(
-                                    menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-                                    menuItem("Join files", icon = icon("signal"), tabName = "join",
-                                             badgeLabel = "new", badgeColor = "green"),
-                                    menuItem("Plot", icon = icon("signal"), tabName = "plot",
-                                             badgeLabel = "new", badgeColor = "green"),
-                                    menuItem("Machine Learning", icon = icon("th"), tabName = "ml",
-                                             badgeLabel = "new", badgeColor = "green")
+                                    menuItem("Dashboard", tabName = "dashboard", icon = icon("blackboard",lib="glyphicon")),
+                                    menuItem("Join files", icon = icon("link",lib="glyphicon"), tabName = "join"
+                                             ),
+                                    menuItem("Plot", icon = icon("stats",lib = "glyphicon"), tabName = "plot"),
+                                    menuItem("Machine Learning", icon = icon("wrench",lib="glyphicon"), tabName = "ml")
                                     
                                   ),
                     
@@ -35,7 +33,8 @@ shinyUI(dashboardPage(
                                         hidden(div(id="main_div",
                                                    fluidRow(
                                                        infoBoxOutput("data_rows"),
-                                                       infoBoxOutput("data_columns")),
+                                                       infoBoxOutput("data_columns"),
+                                                       infoBoxOutput("data_na")),
                                         
                                         fluidRow(
                                           column(style='padding:0px;',offset=0,width=4,div(id="hidden",
@@ -73,8 +72,15 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("variables"),
                                                                                  uiOutput("encode_data"),
                                                                                  uiOutput("val_encode_special")),
-                                                                        tabPanel("More options",
+                                                                        tabPanel("Handle NA",
+                                                                                 uiOutput("na_select"),
                                                                                  uiOutput("na"),
+                                                                                 hr(),
+                                                                                 uiOutput("na_select_replace"),
+                                                                                 uiOutput("na_replace_by"),
+                                                                                 uiOutput("replace_na")
+                                                                                 ),
+                                                                        tabPanel("More options",
                                                                                  uiOutput("reset"))))),
                                           
                                           column(style='padding:0px;',offset=0,width=8,box(style="overflow-x : scroll;height=40em",solidHeader = TRUE,id="data_table",width=12,
@@ -99,8 +105,6 @@ shinyUI(dashboardPage(
                                             box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_2", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
                                           hidden(
                                             div(id="main_div_2",
-                                                fluidRow(
-                                            h1("Plot")),
                                           
                                           fluidRow(
                                             
@@ -132,7 +136,7 @@ shinyUI(dashboardPage(
                                   tabItem(tabName="join",
                                           fluidRow(
                                             box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_3", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
-                                          hidden(div(id="main_div_3",fluidRow(h1("Join file")),
+                                          hidden(div(id="main_div_3",
                                           
                                           fluidRow(
                                             
@@ -157,7 +161,7 @@ shinyUI(dashboardPage(
                                   tabItem(tabName="ml",
                                           fluidRow(
                                             box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif_4", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
-                                          hidden(div(id="main_div_4",fluidRow(h1("ML models")),
+                                          hidden(div(id="main_div_4",
                                           
                                           
                                           fluidRow(

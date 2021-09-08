@@ -102,13 +102,6 @@ shinyServer(function(input,output,session){
         data(result)
       }
       
-    }else if(input$na_replace_by == "Mode"){
-      for(item in input$na_select_replace){
-        mode_ <- mode(result[,item],na.rm=TRUE)
-        result[,item] <- ifelse(is.na(result[,item]),mode_,result[,item])
-        data(result)
-      }
-      
     }else if(input$na_replace_by == "Median"){
       
       for(item in input$na_select_replace){
@@ -116,10 +109,16 @@ shinyServer(function(input,output,session){
         result[,item] <- ifelse(is.na(result[,item]),median_,result[,item])
         data(result)
       }
-      
-    }else{
+    }else if(input$na_replace_by == 0){
       for(item in input$na_select_replace){
         result[,item] <- ifelse(is.na(result[,item]),0,result[,item])
+        data(result)
+      }
+    }
+      
+    else{
+      for(item in input$na_select_replace){
+        result[,item] <- ifelse(is.na(result[,item]),input$na_fill_with,result[,item])
         data(result)
       }
       
@@ -305,6 +304,16 @@ shinyServer(function(input,output,session){
     }
   })
   
+  observeEvent(input$na_replace_by,{
+    req(input$na_replace_by)
+    if(input$na_replace_by == "Other"){
+      shinyjs::show(id = "na_fill_with")
+    }else{
+      shinyjs::hide(id = "na_fill_with")
+    }
+
+  })
+  
   observeEvent(c(data(),input$file),{
     req(data())
     
@@ -320,6 +329,12 @@ shinyServer(function(input,output,session){
       })
       outputOptions(output, "na", suspendWhenHidden = FALSE)
       
+      output$na_fill_with <- renderUI({
+        textInput("na_fill_with","Fill na with :")
+      })
+      
+      outputOptions(output, "na_fill_with", suspendWhenHidden = FALSE)
+      
       outputOptions(output, "na_select", suspendWhenHidden = FALSE)
       
       output$na_select_replace <- renderUI({
@@ -327,7 +342,7 @@ shinyServer(function(input,output,session){
       })
       
       output$na_replace_by <- renderUI({
-        pickerInput("na_replace_by","By :",choices=c("Mean","Median","Mode","0"))
+        pickerInput("na_replace_by","By :",choices=c("Mean","Median","0","Other"),options = list(create = TRUE))
       })
       
       output$replace_na <- renderUI({

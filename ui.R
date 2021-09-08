@@ -5,6 +5,7 @@ library(shinyjs)
 library(plotly)
 library(rsconnect)
 
+
 shinyUI(dashboardPage(
                   dashboardHeader(title="PPR"),
                   dashboardSidebar(width = 350,
@@ -77,6 +78,7 @@ shinyUI(dashboardPage(
                                                                                  hr(),
                                                                                  uiOutput("na_select_replace"),
                                                                                  uiOutput("na_replace_by"),
+                                                                                 hidden(div(id="na_fill_with",uiOutput("na_fill_with"))),
                                                                                  uiOutput("replace_na")
                                                                                  ),
                                                                         tabPanel("More options",
@@ -89,7 +91,7 @@ shinyUI(dashboardPage(
                                         fluidRow(
                                           column(style='padding:0px;',width=6,box(solidHeader = TRUE,title="details",id="str_table",width=12,
                                                              column(width=12,verbatimTextOutput("str")))),
-                                          column(style='padding:0px;',width=6,box(solidHeader = TRUE,title="describe()",id="desc_table",width=12,
+                                          column(style='padding:0px;',width=6,box(solidHeader = TRUE,title="describe",id="desc_table",width=12,
                                                              column(width=12,verbatimTextOutput("desc"))))),
                                   
                                         fluidRow(

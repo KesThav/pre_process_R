@@ -61,12 +61,16 @@ shinyServer(function(input,output,session){
     showNotification(paste0(err), type = 'err')})
   })
 
-
+  js <- c(
+    "table.on('column-reorder', function(e, settings, details){",
+    "  Shiny.setInputValue('colOrder', details.mapping);",
+    "});"
+  )
   #show dataset
   observeEvent(data(),{
     tryCatch({
     result <- data()
-    output$display_file <- DT::renderDataTable(data(),extensions='Buttons',options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print'),search = list(regex = TRUE)),editable=TRUE,server = FALSE)
+    output$display_file <- DT::renderDataTable(data(),filter = "top",extensions=list('Buttons'=TRUE,'ColReorder'=TRUE),callback = JS(js),options=list(dom='Bfrtip',buttons=list('copy','pdf','csv','excel','print'),search = list(regex = TRUE),colReorder = TRUE),editable=TRUE,server = FALSE)
     output$str <- suppressWarnings(renderPrint({str(result[input$display_file_rows_all,])}))
     output$desc <-suppressWarnings(renderPrint({psych::describe(result[input$display_file_rows_all,])}))
   }, warning = function(warn){
@@ -74,6 +78,12 @@ shinyServer(function(input,output,session){
   },
   error = function(err){
     showNotification(paste0(err), type = 'err')})
+  })
+  
+  observeEvent(input[["colOrder"]],{
+    result <- data()
+    result <- result[,input[["colOrder"]]]
+    data(result)
   })
   
   #delete na
@@ -267,7 +277,7 @@ shinyServer(function(input,output,session){
   tryCatch({
   if(length(input$split_col) != 0 & length(input$split_col_sep) != 0 & input$split){
     result <- data()
-    splited <- stringr::str_split_fixed(result[,input$split_col],input$split_col_sep,2)
+    splited <- stringr::str_split(result[,input$split_col],input$split_col_sep,simplify = TRUE)
     splited <- as.data.frame(splited)
     result <- cbind(result,splited)
     data(result)

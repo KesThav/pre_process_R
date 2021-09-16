@@ -17,6 +17,7 @@ library(purrr)
 library(kernlab)
 library(MASS)
 library(randomForest)
+library(lubridate)
 
 shinyServer(function(input,output,session){
   
@@ -170,9 +171,9 @@ shinyServer(function(input,output,session){
     tryCatch({
     if(input$merge & input$merge_col_name != "" & length(input$merge_col_sep) != 0){
       result <- data()
-      result[,input$merge_col_name] <- NA
-      for(name in input$merge_col){
-        result[,input$merge_col_name] <- paste(result[,input$merge_col_name],input$merge_col_sep, result[,name])
+      result[,input$merge_col_name] <- result[,input$merge_col[1]]
+      for(name in input$merge_col[2:length(input$merge_col)]){
+        result[,input$merge_col_name] <- paste0(result[,input$merge_col_name],input$merge_col_sep, result[,name])
       }
       result <- as.data.frame(result[,-which(names(result) %in% input$merge_col)])
       data(result)
@@ -205,6 +206,10 @@ shinyServer(function(input,output,session){
         result[,input$col_to_convert] <- as.factor(result[,input$col_to_convert])
         data(result)
         
+      }else if(input$convert_type == 'date'){
+        result[,input$col_to_convert] <- mdy(result[,input$col_to_convert])
+        data(result)
+
       }else{
         data(result)
       }
@@ -436,7 +441,7 @@ shinyServer(function(input,output,session){
       outputOptions(output, "col_to_convert", suspendWhenHidden = FALSE)
       
       output$convert_type <- renderUI({
-        pickerInput("convert_type","Select what to convert to",choices=c('integer','double','chr','factor'))
+        pickerInput("convert_type","Select what to convert to",choices=c('integer','double','chr','factor','date'))
       })
       
       outputOptions(output, "convert_type", suspendWhenHidden = FALSE)
@@ -639,7 +644,7 @@ shinyServer(function(input,output,session){
       outputOptions(output, "select_y", suspendWhenHidden = FALSE)
       
       output$select_color <- renderUI({
-        pickerInput("select_color",label="Select your label color",choices=c(colnames(data()),"None"=""),selected="")
+        pickerInput("select_color",label="Select your label color",choices=c(colnames(data()),"None"=""),multiple=TRUE,options = pickerOptions(maxOptions = 1))
       })
       outputOptions(output, "select_color", suspendWhenHidden = FALSE)
 
@@ -766,7 +771,7 @@ shinyServer(function(input,output,session){
                  axis.text.y = element_text(angle=input$y_axis_slider, vjust = input$vertical_adjustment_y, hjust=input$horizontal_adjustment_y))
       output$graphic <- renderPlotly({
         if(input$select_plot %in% "scatter plot"){
-          p <- ggplot(data(),aes_string(x=input$select_x,y=input$select_y,color=ifelse(input$select_color != "",input$select_color,"NULL"))) + geom_point() + geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + t
+          p <- ggplot(data(),aes_string(x=input$select_x,y=input$select_y,color=ifelse(!is.null(input$select_color),input$select_color,"NULL"))) + geom_point() + geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + t
           if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
             if(length(input$facet_wrap) == 1){
              if(input$facet_orientation == "Vertical"){
@@ -787,7 +792,7 @@ shinyServer(function(input,output,session){
         }
         
         else if(input$select_plot %in% "bar chart"){
-          p <- ggplot(data(), aes_string(x=input$select_x,fill=ifelse(input$select_color != "",input$select_color,"NULL"))) +
+          p <- ggplot(data(), aes_string(x=input$select_x,fill=ifelse(!is.null(input$select_color),input$select_color,"NULL"))) +
             geom_bar(position=input$dodge,alpha=0.5) + t
           if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
             if(length(input$facet_wrap) == 1){
@@ -808,7 +813,7 @@ shinyServer(function(input,output,session){
           }
           
         }else if(input$select_plot %in% "boxplot"){
-          p<- ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=ifelse(input$select_color != "",input$select_color,"NULL"))) +
+          p<- ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=ifelse(!is.null(input$select_color),input$select_color,"NULL"))) +
             geom_boxplot()+ t
           if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
             if(length(input$facet_wrap) == 1){
@@ -829,7 +834,7 @@ shinyServer(function(input,output,session){
           }
         
         }else if(input$select_plot %in% "violin plot"){
-          p <- ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=ifelse(input$select_color != "",input$select_color,"NULL"))) +
+          p <- ggplot(data(), aes_string(x=input$select_x,y=input$select_y,color=ifelse(!is.null(input$select_color),input$select_color,"NULL"))) +
             geom_violin()+ t
           if(!is.null(input$facet_wrap) & length(input$facet_wrap) != 0){
             if(length(input$facet_wrap) == 1){

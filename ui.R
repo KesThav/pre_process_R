@@ -28,7 +28,7 @@ shinyUI(dashboardPage(
                                 tabItems(
                                   tabItem(tabName="dashboard",
                                         fluidRow(
-                                              box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif", width=12, style="backgroud: #ccff90", h1("Upload a file"))),
+                                              box(style="height : 100vh; width : 100%; display : flex; justify-content : center;align-items : center;",solidHeader = TRUE,id="notif", width=12, h1("Upload a file"))),
                                               
                                         hidden(div(id="main_div",
                                                    fluidRow(
@@ -39,26 +39,22 @@ shinyUI(dashboardPage(
                                         fluidRow(
                                           column(style='padding:0px;',offset=0,width=4,div(id="hidden",
                                                                  tabBox(width=12,
-                                                                        tabPanel("Merge / Delete",
-                                                                                 uiOutput("delete_col"),
-                                                                                 uiOutput("delete"),
-                                                                                 hr(),
+                                                                        tabPanel("Merge / Split",
                                                                                  uiOutput("merge_col"),
                                                                                  uiOutput("merge_col_name"),
                                                                                  uiOutput("merge_col_sep"),
                                                                                  uiOutput("merge"),
                                                                                  hr(),
-                                                                                 uiOutput("delete_r")
-                                                                                 ),
-                                                                                
-                                                                        tabPanel("Rename / Split",
-                                                                                 uiOutput("rename_col"),
-                                                                                 uiOutput("rename_col_name"),
-                                                                                 uiOutput("rename"),
-                                                                                 hr(),
                                                                                  uiOutput("split_col"),
                                                                                  uiOutput("split_col_sep"),
-                                                                                 uiOutput("split")),
+                                                                                 uiOutput("split")
+                                                                                 ),
+                                                                                
+                                                                        tabPanel("Rename",
+                                                                                 uiOutput("rename_col"),
+                                                                                 uiOutput("rename_col_name"),
+                                                                                 uiOutput("rename")
+                                                                                 ),
                                                                         tabPanel("Convert types",
                                                                                  uiOutput("col_to_convert"),
                                                                                  uiOutput("convert_type"),
@@ -80,6 +76,12 @@ shinyUI(dashboardPage(
                                                                                  uiOutput("na_replace_by"),
                                                                                  hidden(div(id="na_fill_with",uiOutput("na_fill_with"))),
                                                                                  uiOutput("replace_na")
+                                                                                 ),
+                                                                        tabPanel("Delete col/row",
+                                                                                 uiOutput("delete_col"),
+                                                                                 uiOutput("delete"),
+                                                                                 hr("Select rows then click on delete"),
+                                                                                 uiOutput("delete_r")
                                                                                  ),
                                                                         tabPanel("More options",
                                                                                  uiOutput("reset"))))),

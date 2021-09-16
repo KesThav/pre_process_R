@@ -14,12 +14,13 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 - Convert column's type (integer, double, character and factor)
 - Split columns using separator
 - Rename columns
+- Reorder columns
 - Delete columns
 - Edit rows
 - Delete rows
 - Override current data
 - Export dataset (copy, pdf, csv, excel and print)
-- Filter table (filter table on multiple columns using regex syntax)
+- Filter table (filter table on multiple columns using regex syntax or by range)
 - Reset (return initial dataset)
 
 

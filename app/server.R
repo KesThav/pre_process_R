@@ -11,7 +11,6 @@ library(mltools)
 library(ggcorrplot)
 library(GGally)
 library(e1071)
-library(caret)
 library(plotly)
 library(purrr)
 library(kernlab)
@@ -19,7 +18,7 @@ library(MASS)
 library(randomForest)
 library(lubridate)
 
-shinyServer(function(input,output,session){
+server <- function(input,output,session){
   
 #Preprocess
   data <- reactiveVal()
@@ -37,7 +36,7 @@ shinyServer(function(input,output,session){
     if(!is.null(input$file)){
       req(input$file)
       file <- input$file
-      d <- read.csv(file$datapath,header=TRUE)
+      d <- read.csv(file$datapath,header=TRUE,sep=";")
       rownames(d) <- NULL
       data(as.data.frame(d))
     }
@@ -52,7 +51,7 @@ shinyServer(function(input,output,session){
   observeEvent(input$reset,{
     tryCatch({
     file <- input$file
-    d <- read.csv(file$datapath,header=TRUE)
+    d <- read.csv(file$datapath,header=TRUE,sep=";")
     rownames(d) <- NULL
     data(as.data.frame(d))
   }, warning = function(warn){
@@ -907,7 +906,7 @@ shinyServer(function(input,output,session){
       }
       if(!is.null(input$file2)){
         d2 <- input$file2
-        file_2 <- read.csv(d2$datapath,header=TRUE)
+        file_2 <- read.csv(d2$datapath,header=TRUE,sep=";")
         rownames(file_2) <- NULL
         file_2 <- as.data.frame(file_2)
         file_data$f2 <- file_2
@@ -1016,7 +1015,7 @@ shinyServer(function(input,output,session){
   
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste(input$dataset, ".csv", sep = "")
+      paste0(input$dataset, ".csv")
     },
     content = function(file) {
       write.csv(file_data$merge, file, row.names = FALSE)
@@ -1121,7 +1120,7 @@ shinyServer(function(input,output,session){
       result <- data()
       train <- result
       f_ <- input$load_test
-      test <- read.csv(f_$datapath,header=TRUE)
+      test <- read.csv(f_$datapath,header=TRUE,sep=";")
       df$train <- train
       df$test <- test
       output$train_set <- renderDataTable({
@@ -1195,7 +1194,7 @@ shinyServer(function(input,output,session){
   observeEvent(input$predict,{
     tryCatch({
       file <- input$load_predict_datasets
-      data_to_predict <- read.csv(file$datapath,header=TRUE)
+      data_to_predict <- read.csv(file$datapath,header=TRUE,sep=";")
       req(input$load_predict_datasets)
       pred <- predict(df$finalModel,newdata=data_to_predict[,c(input$label_used_to_predict)])
       df$final_pred <- as.data.frame(pred)
@@ -1213,5 +1212,5 @@ shinyServer(function(input,output,session){
   })
   
 
-})
+}
 

@@ -1,0 +1,13 @@
+name: pre_process_r
+title: pre_process_r
+username:
+account: kassis
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4607745
+bundleId: 5757606
+url: https://kassis.shinyapps.io/pre_process_r/
+when: 1648916005.7417
+lastSyncTime: 1648916005.7417
+asMultiple: FALSE
+asStatic: FALSE

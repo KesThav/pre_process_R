@@ -3,10 +3,10 @@ library(shinydashboard)
 library(DT)
 library(shinyjs)
 library(plotly)
-library(rsconnect)
+#library(rsconnect)
 
 
-shinyUI(dashboardPage(
+ui <- dashboardPage(
                   dashboardHeader(title="PPR"),
                   dashboardSidebar(width = 350,
                                    useShinyjs(),
@@ -212,4 +212,4 @@ shinyUI(dashboardPage(
 
                               
           
-))
+)

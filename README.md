@@ -2,6 +2,10 @@
 
 PPR helps users pre-process, analyze, visualize, join and apply machine learning models on datasets without coding.
 
+# Getting started
+
+Try it online : https://kassis.shinyapps.io/pre_process_r/
+
 # Available functionalities
 
 ## Pre-processing
@@ -65,11 +69,4 @@ After joining, merged file can be either export or use as current dataset.
 - Random Forest
 - Linear discriminant Analysis
 
-# Getting started
 
-1. Clone repository
-2. Install RStudio
-3. Open `server.R` and `ui.R` in RStudio
-4. Press `Run App` button
-
-or try it online : https://kassis.shinyapps.io/pre_process_r/

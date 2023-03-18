@@ -36,7 +36,7 @@ server <- function(input,output,session){
     if(!is.null(input$file)){
       req(input$file)
       file <- input$file
-      d <- read.csv(file$datapath,header=TRUE,sep=";")
+      d <- suppressWarnings(read.csv(text=readLines(file$datapath, warn = FALSE),header=TRUE,encoding = "UTF-8"))
       rownames(d) <- NULL
       data(as.data.frame(d))
     }
@@ -51,7 +51,7 @@ server <- function(input,output,session){
   observeEvent(input$reset,{
     tryCatch({
     file <- input$file
-    d <- read.csv(file$datapath,header=TRUE,sep=";")
+    d <- suppressWarnings(read.csv(text=readLines(file$datapath, warn = FALSE),header=TRUE,encoding = "UTF-8"))
     rownames(d) <- NULL
     data(as.data.frame(d))
   }, warning = function(warn){
@@ -767,7 +767,7 @@ server <- function(input,output,session){
   observeEvent(change_to_observe(),{
     tryCatch({
       t <- theme(axis.text.x = element_text(angle = input$x_axis_slider, vjust = input$vertical_adjustment_x, hjust=input$horizontal_adjustment_x), 
-                 axis.text.y = element_text(angle=input$y_axis_slider, vjust = input$vertical_adjustment_y, hjust=input$horizontal_adjustment_y))
+                 axis.text.y = element_text(angle=input$y_axis_slider, vjust = input$vertical_adjustment_y, hjust=input$horizontal_adjustment_y)) + theme_bw()
       output$graphic <- renderPlotly({
         if(input$select_plot %in% "scatter plot"){
           p <- ggplot(data(),aes_string(x=input$select_x,y=input$select_y,color=ifelse(!is.null(input$select_color),input$select_color,"NULL"))) + geom_point() + geom_smooth(method=lm, se=FALSE, fullrange=TRUE) + t
@@ -906,7 +906,7 @@ server <- function(input,output,session){
       }
       if(!is.null(input$file2)){
         d2 <- input$file2
-        file_2 <- read.csv(d2$datapath,header=TRUE,sep=";")
+        file_2 <- suppressWarnings(read.csv(text=readLines(d2$datapath,warn=FALSE),header=TRUE,encoding = "UTF-8"))
         rownames(file_2) <- NULL
         file_2 <- as.data.frame(file_2)
         file_data$f2 <- file_2
@@ -1120,7 +1120,7 @@ server <- function(input,output,session){
       result <- data()
       train <- result
       f_ <- input$load_test
-      test <- read.csv(f_$datapath,header=TRUE,sep=";")
+      test <- suppressWarnings(read.csv(text=readLines(f_$datapath,warn=FALSE),header=TRUE,encoding = "UTF-8"))
       df$train <- train
       df$test <- test
       output$train_set <- renderDataTable({
@@ -1194,7 +1194,7 @@ server <- function(input,output,session){
   observeEvent(input$predict,{
     tryCatch({
       file <- input$load_predict_datasets
-      data_to_predict <- read.csv(file$datapath,header=TRUE,sep=";")
+      data_to_predict <- suppressWarnings(read.csv(text=readLines(file$datapath,warn=FALSE),header=TRUE,encoding = "UTF-8"))
       req(input$load_predict_datasets)
       pred <- predict(df$finalModel,newdata=data_to_predict[,c(input$label_used_to_predict)])
       df$final_pred <- as.data.frame(pred)

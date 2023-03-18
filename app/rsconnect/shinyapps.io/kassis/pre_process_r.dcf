@@ -5,9 +5,9 @@ account: kassis
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4607745
-bundleId: 5757606
+bundleId: 6975613
 url: https://kassis.shinyapps.io/pre_process_r/
-when: 1648916005.7417
-lastSyncTime: 1648916005.7417
+when: 1679147929.89039
+lastSyncTime: 1679147929.89041
 asMultiple: FALSE
 asStatic: FALSE

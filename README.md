@@ -4,7 +4,7 @@ PPR helps users pre-process, analyze, visualize, join and apply machine learning
 
 # Getting started
 
-Try it online : https://kassis.shinyapps.io/pre_process_r/
+Try it online : https://kassis.shinyapps.io/pre-process/
 
 # Available functionalities
 
